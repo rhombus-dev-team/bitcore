@@ -56,11 +56,19 @@ module.exports = {
         url: 'https://api-eth.bitcore.io',
       },
     },
+    part: {
+      livenet: {
+        url: 'http://localhost:3000',
+      },
+      testnet: {
+        url: 'http://localhost:3000',
+      },
+    },
   },
   pushNotificationsOpts: {
     templatePath: 'templates',
     defaultLanguage: 'en',
-    defaultUnit: 'btc',
+    defaultUnit: 'part',
     subjectPrefix: '',
     pushServerUrl: 'https://fcm.googleapis.com/fcm',
     authorizationKey: 'You_have_to_put_something_here',

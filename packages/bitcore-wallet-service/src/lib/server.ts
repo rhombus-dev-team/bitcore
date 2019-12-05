@@ -27,7 +27,8 @@ const Bitcore = require('bitcore-lib');
 const Bitcore_ = {
   btc: Bitcore,
   bch: require('bitcore-lib-cash'),
-  eth: Bitcore
+  eth: Bitcore,
+  part: require('bitcore-lib-particl')
 };
 
 const Common = require('./common');
@@ -526,7 +527,7 @@ export class WalletService {
       : Constants.SCRIPT_TYPES.P2SH;
 
     try {
-      pubKey = new Bitcore.PublicKey.fromString(opts.pubKey);
+      pubKey = new Bitcore_[opts.coin].PublicKey.fromString(opts.pubKey);
     } catch (ex) {
       return cb(new ClientError('Invalid public key'));
     }
@@ -571,6 +572,7 @@ export class WalletService {
             addressType,
             nativeCashAddr: opts.nativeCashAddr,
             usePurpose48: opts.n > 1 && !!opts.usePurpose48,
+            coldStakingAddress: opts.coldStakingAddress
           });
           this.storage.storeWallet(wallet, (err) => {
             this.logd('Wallet created', wallet.id, opts.network);
@@ -1081,7 +1083,7 @@ export class WalletService {
 
     let xPubKey;
     try {
-      xPubKey = Bitcore.HDPublicKey(opts.xPubKey);
+      xPubKey = Bitcore_[opts.coin].HDPublicKey(opts.xPubKey);
     } catch (ex) {
       return cb(new ClientError('Invalid extended public key'));
     }
@@ -1328,6 +1330,8 @@ export class WalletService {
    * @param {Object} opts
    * @param {Boolean} [opts.ignoreMaxGap=false] - Ignore constraint of maximum number of consecutive addresses without activity
    * @param {Boolean} opts.noCashAddr (do not use cashaddr, only for backwards compat)
+   * @param {Boolean} [opts.isChange=false] - Is it a change address
+   * @param {Boolean} [opts.sha256=false] - Is it a sha256 address
    * @returns {Address} address
    */
   createAddress(opts, cb) {
@@ -1336,7 +1340,7 @@ export class WalletService {
     const createNewAddress = (wallet, cb) => {
       let address;
       try {
-        address = wallet.createAddress(false);
+        address = wallet.createAddress(opts.isChange, opts.sha256);
       } catch (e) {
         this.logw('Error creating address', e);
         return cb('Bad xPub');
@@ -2805,6 +2809,7 @@ export class WalletService {
    * @param {number} opts.feeLevel[='normal'] - Optional. Specify the fee level for this TX ('priority', 'normal', 'economy', 'superEconomy') as defined in Defaults.FEE_LEVELS.
    * @param {number} opts.feePerKb - Optional. Specify the fee per KB for this TX (in satoshi).
    * @param {string} opts.changeAddress - Optional. Use this address as the change address for the tx. The address should belong to the wallet. In the case of singleAddress wallets, the first main address will be used.
+   * @param {string} opts.coldStakingAddress - Optional. Use this address as the cold staking address or xpub key for the tx.
    * @param {Boolean} opts.sendMax - Optional. Send maximum amount of funds that make sense under the specified fee/feePerKb conditions. (defaults to false).
    * @param {string} opts.payProUrl - Optional. Paypro URL for peers to verify TX
    * @param {Boolean} opts.excludeUnconfirmedUtxos[=false] - Optional. Do not use UTXOs of unconfirmed transactions as inputs
@@ -2842,7 +2847,7 @@ export class WalletService {
             }
           );
         } else {
-          return cb(null, wallet.createAddress(true), true);
+          return cb(null, wallet.createAddress(true, 1, !!opts.coldStakingAddress), true);
         }
       }
     };
@@ -2936,6 +2941,7 @@ export class WalletService {
                     message: opts.message,
                     from: opts.from,
                     changeAddress,
+                    coldStakingAddress: opts.coldStakingAddress,
                     feeLevel: opts.feeLevel,
                     feePerKb,
                     payProUrl: opts.payProUrl,
@@ -3725,6 +3731,13 @@ export class WalletService {
           return true;
         }
       }
+      if (tx.category == 'stake') {
+        const output = {
+          address: tx.address,
+          amount: Math.abs(tx.satoshis)
+        };
+        return true;
+      }
 
       // move without send?
       if (tx.category == 'move' && !indexedSend[tx.txid]) {
@@ -3802,6 +3815,7 @@ export class WalletService {
           addressTo: undefined,
           outputs: undefined,
           dust: false,
+          isCoinStake: tx.isCoinStake
         };
         switch (tx.category) {
           case 'send':
@@ -3818,6 +3832,13 @@ export class WalletService {
             break;
           case 'move':
             ret.action = 'moved';
+            ret.amount = Math.abs(tx.satoshis);
+            ret.addressTo =
+              tx.outputs && tx.outputs.length ? tx.outputs[0].address : null;
+            ret.outputs = tx.outputs;
+            break;
+          case 'stake':
+            ret.action = 'staked';
             ret.amount = Math.abs(tx.satoshis);
             ret.addressTo =
               tx.outputs && tx.outputs.length ? tx.outputs[0].address : null;
@@ -4590,8 +4611,11 @@ export class WalletService {
 
   _runScan(wallet: Wallet, step, opts, cb) {
     const scanBranch = (wallet: Wallet, derivator, cb) => {
-      let inactiveCounter = 0;
+      let inactiveIndexCounter = 0;
       const allAddresses = [];
+      let addresses = [];
+      let activeDerivativeIndex = false;
+      let numAddrsPerIndex;
 
       let gap = Defaults.SCAN_ADDRESS_GAP;
 
@@ -4603,23 +4627,40 @@ export class WalletService {
       async.whilst(
         () => {
           //      this.logi('Scanning addr branch: %s index: %d gap %d step %d', derivator.id, derivator.index(), inactiveCounter, step);
-          return inactiveCounter < gap;
+          return inactiveIndexCounter < gap;
         },
         (next) => {
-          const address = derivator.derive();
+          if (_.isEmpty(addresses)) {
+            const addr = derivator.derive();
+            addresses = _.isArray(addr) ? addr : [addr];
+            activeDerivativeIndex = false;
+            if (!numAddrsPerIndex) {
+              numAddrsPerIndex = addresses.length;
+            }
+          }
+
+          const address = addresses.pop();
 
           opts.bc.getAddressActivity(address.address, (err, activity) => {
             if (err) return next(err);
             //       console.log('[server.js.3779:address:] SCANING:' + address.address+ ':'+address.path + " :" + !!activity); //TODO
 
             allAddresses.push(address);
-            inactiveCounter = activity ? 0 : inactiveCounter + 1;
+
+            if (activity) {
+              activeDerivativeIndex = true;
+            }
+
+            // Only increment when there is any activity on a address derived from this index
+            if (_.isEmpty(addresses)) {
+              inactiveIndexCounter = activeDerivativeIndex ? 0 : inactiveIndexCounter + 1;
+            }
             return next();
           });
         },
         (err) => {
           derivator.rewind(gap);
-          return cb(err, _.dropRight(allAddresses, gap));
+          return cb(err, _.dropRight(allAddresses, (gap * numAddrsPerIndex)));
         }
       );
     };
@@ -4628,7 +4669,7 @@ export class WalletService {
     _.each([false, true], (isChange) => {
       derivators.push({
         id: wallet.addressManager.getBaseAddressPath(isChange),
-        derive: _.bind(wallet.createAddress, wallet, isChange, step),
+        derive: _.bind(wallet.createAddresses, wallet, isChange, step),
         index: _.bind(
           wallet.addressManager.getCurrentIndex,
           wallet.addressManager,
@@ -4682,7 +4723,11 @@ export class WalletService {
               i = 0;
             // tslint:disable-next-line:no-conditional-assignment
             while ((addr = derivator.getSkippedAddress())) {
-              addresses.push(addr);
+              if (_.isArray(addr)) {
+                _.each(addr, function(a) { addresses.push(a); });
+              } else {
+                addresses.push(addr);
+              }
               i++;
             }
             // this.logi(i + ' addresses were added.');
@@ -4817,6 +4862,89 @@ export class WalletService {
     if (!checkRequired(opts, ['txid'], cb)) return;
 
     this.storage.removeTxConfirmationSub(this.copayerId, opts.txid, cb);
+  }
+
+  /**
+   * Update the wallet cold staking setup
+   * @param {Object} opts
+   * @param {string} opts.label - Label for the staking node
+   * @param {string} opts.staking_key - Either the cold staking bech32 address or xpub key
+   */
+  updateColdStakingSetup(opts, cb) {
+    const self = this;
+
+    self._runLocked(cb, function(cb) {
+      self.getWallet({}, function(err, wallet) {
+        if (err) { return cb(err); }
+
+        wallet.updateColdStakingSetup(opts);
+
+        self.storage.storeWallet(wallet, function(err) {
+          if (err) return cb(err);
+
+          return cb(null, {});
+        });
+      });
+    });
+  }
+
+  /**
+   * Get the wallet cold staking setup
+   * @return {Object} config
+   * @return {string} config.label - Label for the staking node
+   * @return {string} config.staking_key - Either the cold staking bech32 address or xpub key
+   */
+  getColdStakingSetup(cb) {
+    const self = this;
+
+    self._runLocked(cb, function(cb) {
+      self.getWallet({}, function(err, wallet) {
+        if (err) { return cb(err); }
+
+        const config = wallet.getColdStakingSetup();
+        return cb(null, config);
+      });
+    });
+  }
+
+  /**
+   * Get the cold staking addresses
+   * @return {Object} addresses
+   * @return {string} addresses.staking_address - Staking address
+   * @return {string} addresses.spend_address - Spend address
+   */
+  getColdStakingAddresses(cb) {
+    const self = this;
+
+    self._runLocked(cb, function(cb) {
+      self.getWallet({}, function(err, wallet) {
+        if (err) { return cb(err); }
+
+        // We do this here as we already have the storage setup
+        if (wallet.singleAddress) {
+          self.storage.fetchAddresses(self.walletId, function(err, addrs) {
+            if (err) return cb(err);
+            if (_.isEmpty(addrs)) return cb(new ClientError('The wallet has no addresses'));
+
+            const spendAddress: any = _.head(addrs);
+            const addresses = wallet.getColdStakingAddresses(spendAddress.address);
+
+            return cb(null, addresses);
+          });
+        } else {
+          const addresses = wallet.getColdStakingAddresses();
+
+          if (_.isEmpty(addresses)) {
+            return cb(null, addresses);
+          }
+
+          self.storage.storeAddressAndWallet(wallet, addresses.spend_address, function() {
+            addresses.spend_address = addresses.spend_address.address;
+            return cb(null, addresses);
+          });
+        }
+      });
+    });
   }
 }
 

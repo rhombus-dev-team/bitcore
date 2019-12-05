@@ -21,6 +21,7 @@ export interface IAddress {
   type: string;
   hasActivity: boolean;
   beRegistered: boolean;
+  isSha256: boolean;
 }
 
 export class Address {
@@ -36,10 +37,12 @@ export class Address {
   type: string;
   hasActivity: boolean;
   beRegistered: boolean;
+  isSha256: boolean;
 
   static Bitcore = {
     btc: require('bitcore-lib'),
-    bch: require('bitcore-lib-cash')
+    bch: require('bitcore-lib-cash'),
+    part: require('bitcore-lib-particl')
   };
 
   static create(opts) {
@@ -65,6 +68,7 @@ export class Address {
     x.type = opts.type || Constants.SCRIPT_TYPES.P2SH;
     x.hasActivity = undefined;
     x.beRegistered = null;
+    x.isSha256 = opts.isSha256;
     return x;
   }
 
@@ -83,6 +87,7 @@ export class Address {
     x.type = obj.type || Constants.SCRIPT_TYPES.P2SH;
     x.hasActivity = obj.hasActivity;
     x.beRegistered = obj.beRegistered;
+    x.isSha256 = obj.isSha256;
     return x;
   }
 
@@ -93,7 +98,8 @@ export class Address {
     m,
     coin,
     network,
-    noNativeCashAddr
+    noNativeCashAddr,
+    sha256
   ) {
     $.checkArgument(
       Utils.checkValueInCollection(scriptType, Constants.SCRIPT_TYPES)
@@ -112,7 +118,9 @@ export class Address {
         bitcoreAddress = Address.Bitcore[coin].Address.createMultisig(
           publicKeys,
           m,
-          network
+          network,
+          null,
+          sha256
         );
         break;
       case Constants.SCRIPT_TYPES.P2PKH:
@@ -121,7 +129,8 @@ export class Address {
         if (Address.Bitcore[coin]) {
           bitcoreAddress = Address.Bitcore[coin].Address.fromPublicKey(
             publicKeys[0],
-            network
+            network,
+            sha256
           );
         } else {
           const { addressIndex, isChange } = new AddressManager().parseDerivationPath(path);
@@ -160,7 +169,8 @@ export class Address {
     coin,
     network,
     isChange,
-    noNativeCashAddr = false
+    noNativeCashAddr = false,
+    sha256
   ) {
     const raw = Address._deriveAddress(
       scriptType,
@@ -169,7 +179,8 @@ export class Address {
       m,
       coin,
       network,
-      noNativeCashAddr
+      noNativeCashAddr,
+      sha256
     );
     return Address.create(
       _.extend(raw, {
@@ -177,7 +188,8 @@ export class Address {
         network,
         walletId,
         type: scriptType,
-        isChange
+        isChange,
+        isSha256: sha256
       })
     );
   }

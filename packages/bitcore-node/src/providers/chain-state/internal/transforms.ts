@@ -33,7 +33,22 @@ export class ListTransactionsStream extends Transform {
         const sendingToOurself = output.wallets.some((outputWallet) => {
           return outputWallet.equals(wallet);
         });
-        if (!sendingToOurself) {
+        if (transaction.coinstake) {
+          this.push(
+            JSON.stringify({
+              id: transaction._id,
+              txid: transaction.txid,
+              fee: 0,
+              size: transaction.size,
+              category: 'stake',
+              satoshis: -transaction.fee,
+              height: transaction.blockHeight,
+              address: output.address,
+              outputIndex: output.mintIndex,
+              blockTime: transaction.blockTimeNormalized
+            }) + '\n'
+          );
+        } else if (!sendingToOurself) {
           this.push(
             JSON.stringify({
               id: transaction._id,

@@ -189,7 +189,8 @@ export class PushNotificationsService {
                             body: content.plain.body,
                             sound: 'default',
                             click_action: 'FCM_PLUGIN_ACTIVITY',
-                            icon: 'fcm_push_icon'
+                            icon: 'fcm_push_icon',
+                            color: '#45D492'
                           },
                           data: {
                             walletId: sjcl.codec.hex.fromBits(

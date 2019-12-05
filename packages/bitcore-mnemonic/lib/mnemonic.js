@@ -1,6 +1,11 @@
 'use strict';
 
 var bitcore = require('bitcore-lib');
+var bitcore_ = {
+  btc: bitcore,
+  bch: require('bitcore-lib-cash'),
+  part: require('bitcore-lib-particl'),
+};
 var BN = bitcore.crypto.BN;
 var unorm = require('unorm');
 var _ = bitcore.deps._;
@@ -203,9 +208,9 @@ Mnemonic.fromSeed = function(seed, wordlist) {
  * @param {Network|String|number=} [network] - The network: 'livenet' or 'testnet'
  * @returns {HDPrivateKey}
  */
-Mnemonic.prototype.toHDPrivateKey = function(passphrase, network) {
+Mnemonic.prototype.toHDPrivateKey = function(passphrase, network, coin) {
   var seed = this.toSeed(passphrase);
-  return bitcore.HDPrivateKey.fromSeed(seed, network);
+  return bitcore_[coin || 'btc'].HDPrivateKey.fromSeed(seed, network);
 };
 
 /**

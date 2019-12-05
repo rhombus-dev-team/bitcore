@@ -12,7 +12,8 @@ log.disableColor();
 const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
-  eth: require('bitcore-lib')
+  eth: require('bitcore-lib'),
+  part: require('bitcore-lib-particl')
 };
 
 const Common = require('../common');
@@ -34,6 +35,7 @@ export interface ITxProposal {
   payProUrl: string;
   from: string;
   changeAddress: string;
+  coldStakingAddress?: string;
   inputs: any[];
   outputs: Array<{
     amount: number;
@@ -83,6 +85,7 @@ export class TxProposal {
   payProUrl: string;
   from: string;
   changeAddress: any;
+  coldStakingAddress?: any;
   inputs: any[];
   outputs: Array<{
     amount: number;
@@ -117,6 +120,7 @@ export class TxProposal {
   gasLimit?: number;
   gasPrice?: number;
   data?: string;
+  xpubKeys?: string[];
 
   static create(opts) {
     opts = opts || {};
@@ -140,13 +144,14 @@ export class TxProposal {
     x.message = opts.message;
     x.payProUrl = opts.payProUrl;
     x.changeAddress = opts.changeAddress;
+    x.coldStakingAddress = opts.coldStakingAddress;
     x.outputs = _.map(opts.outputs, (output) => {
       return _.pick(output, ['amount', 'toAddress', 'message', 'script']);
     });
     x.outputOrder = _.range(x.outputs.length + 1);
-    if (!opts.noShuffleOutputs) {
-      x.outputOrder = _.shuffle(x.outputOrder);
-    }
+    // if (!opts.noShuffleOutputs) {
+    //   x.outputOrder = _.shuffle(x.outputOrder);
+    // }
     x.walletM = opts.walletM;
     x.walletN = opts.walletN;
     x.requiredSignatures = x.walletM;
@@ -201,6 +206,7 @@ export class TxProposal {
     x.message = obj.message;
     x.payProUrl = obj.payProUrl;
     x.changeAddress = obj.changeAddress;
+    x.coldStakingAddress = obj.coldStakingAddress;
     x.inputs = obj.inputs;
     x.walletM = obj.walletM;
     x.walletN = obj.walletN;
@@ -247,6 +253,7 @@ export class TxProposal {
   setInputs(inputs) {
     this.inputs = inputs || [];
     this.inputPaths = _.map(inputs, 'path') || [];
+    this.xpubKeys = _.map(inputs, 'publicKeys') || [];
   }
 
   _updateStatus() {
@@ -321,21 +328,21 @@ export class TxProposal {
       t.fee(this.fee);
 
       if (this.changeAddress) {
-        t.change(this.changeAddress.address);
+        t.change(this.changeAddress.address, this.coldStakingAddress);
       }
 
       // Shuffle outputs for improved privacy
-      if (t.outputs.length > 1) {
-        const outputOrder = _.reject(this.outputOrder, (order: number) => {
-          return order >= t.outputs.length;
-        });
-        $.checkState(t.outputs.length == outputOrder.length);
-        t.sortOutputs((outputs) => {
-          return _.map(outputOrder, (i) => {
-            return outputs[i];
-          });
-        });
-      }
+      // if (t.outputs.length > 1) {
+      //   const outputOrder = _.reject(this.outputOrder, (order: number) => {
+      //     return order >= t.outputs.length;
+      //   });
+      //   $.checkState(t.outputs.length == outputOrder.length);
+      //   t.sortOutputs((outputs) => {
+      //     return _.map(outputOrder, (i) => {
+      //       return outputs[i];
+      //     });
+      //   });
+      // }
 
       // Validate actual inputs vs outputs independently of Bitcore
       const totalInputs = _.sumBy(t.inputs, 'output.satoshis');
@@ -501,7 +508,6 @@ export class TxProposal {
         i++;
       } catch (e) { }
     });
-
     if (i != tx.inputs.length) throw new Error('Wrong signatures');
   }
 

@@ -14,7 +14,8 @@ const Constants = Common.Constants,
 const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
-  eth: require('bitcore-lib')
+  eth: require('bitcore-lib'),
+  part: require('bitcore-lib-particl')
 };
 
 export interface IWallet {
@@ -42,6 +43,11 @@ export interface IWallet {
   nativeCashAddr: boolean;
   isTestnet?: boolean;
   usePurpose48?: boolean;
+  coldStakingSetup?: {
+    spend_address?: string;
+    staking_key?: string;
+    address_index?: number;
+  };
 }
 
 export class Wallet {
@@ -69,6 +75,11 @@ export class Wallet {
   nativeCashAddr: boolean;
   isTestnet?: boolean;
   usePurpose48?: boolean;
+  coldStakingSetup?: {
+    spend_address?: string;
+    staking_key?: string;
+    address_index?: number;
+  };
 
   scanning: boolean;
   static COPAYER_PAIR_LIMITS = {};
@@ -122,6 +133,8 @@ export class Wallet {
         : null
       : opts.nativeCashAddr;
 
+    x.coldStakingSetup = {};
+
     return x;
   }
 
@@ -160,6 +173,8 @@ export class Wallet {
 
     x.nativeCashAddr = obj.nativeCashAddr;
     x.usePurpose48 = obj.usePurpose48;
+
+    x.coldStakingSetup = obj.coldStakingSetup;
 
     return x;
   }
@@ -262,7 +277,7 @@ export class Wallet {
     return this.scanning;
   }
 
-  createAddress(isChange, step) {
+  createAddress(isChange, step, sha256) {
     $.checkState(this.isComplete());
 
     const path = this.addressManager.getNewAddressPath(isChange, step);
@@ -276,13 +291,14 @@ export class Wallet {
       this.coin,
       this.network,
       isChange,
-      !this.nativeCashAddr
+      !this.nativeCashAddr,
+      sha256
     );
     return address;
   }
 
   /// Only for power scan
-  getSkippedAddress() {
+  getSkippedAddress(sha256) {
     $.checkState(this.isComplete());
 
     const next = this.addressManager.getNextSkippedPath();
@@ -295,8 +311,70 @@ export class Wallet {
       this.m,
       this.coin,
       this.network,
-      next.isChange
+      next.isChange,
+      null,
+      sha256
     );
     return address;
+  }
+
+  createAddresses(isChange, step) {
+    $.checkState(this.isComplete());
+
+    const addresses = [];
+
+    const path = this.addressManager.getNewAddressPath(isChange, step);
+    log.verbose('Deriving addr:' + path);
+
+    addresses.push(Address.derive(this.id, this.addressType, this.publicKeyRing, path, this.m, this.coin, this.network, isChange, null, false));
+
+    if (this.coin === 'part' && !this.singleAddress) {
+      addresses.push(Address.derive(this.id, this.addressType, this.publicKeyRing, path, this.m, this.coin, this.network, isChange, null, true));
+    }
+
+    return addresses;
+  }
+
+  updateColdStakingSetup(coldStakingSetup) {
+    this.coldStakingSetup = coldStakingSetup;
+  }
+
+  getColdStakingSetup() {
+    return this.coldStakingSetup;
+  }
+
+  getColdStakingAddresses(spendAddress) {
+    let addresses = {};
+
+    if (this.coin !== 'part' || _.isEmpty(this.coldStakingSetup)) {
+      return addresses;
+    }
+
+    if (this.coldStakingSetup.staking_key.startsWith('pcs') ||
+        this.coldStakingSetup.staking_key.startsWith('tpcs')) {
+
+      if (!this.coldStakingSetup.spend_address) {
+        this.coldStakingSetup.spend_address = spendAddress ? spendAddress : this.createAddress(true, 1, true);
+      }
+
+      addresses['staking_address'] = this.coldStakingSetup.staking_key;
+      addresses['spend_address'] = this.coldStakingSetup.spend_address;
+    } else {
+      const xPub = Bitcore.part.HDPublicKey(this.coldStakingSetup.staking_key);
+
+      if (!this.coldStakingSetup.address_index) {
+        this.coldStakingSetup['address_index'] = 0;
+      }
+
+      const coldStakingAddress = xPub
+        .derive(this.coldStakingSetup.address_index++)
+        .publicKey.toAddress()
+        .toString();
+
+      addresses['staking_address'] = coldStakingAddress;
+      addresses['spend_address'] = spendAddress ? spendAddress : this.createAddress(true, 1, true);
+    }
+
+    return addresses;
   }
 }

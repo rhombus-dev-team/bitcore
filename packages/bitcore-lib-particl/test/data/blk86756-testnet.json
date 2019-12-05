@@ -1,0 +1,39 @@
+{
+	"header": {
+		"hash": "fb0d2397a0fc68cf2a84310bc849b590b71ec8ae36e18c05bc878239853b247a",
+		"version": 160,
+		"prevHash": "ff2316f8e1af22b5aaccc2f0e5d7d60c73363d1df2239aba0fa27fe7dd5d16cb",
+		"merkleRoot": "90615ec007877bd53aa7e8b8d9c1f285be1923c8df3af2cab30974b11d65957a",
+		"witnessMerkleRoot": "9880408cf7a47a35fa430929f76dcbbffc24b908edc2e74557e9dcad23c22a50",
+		"time": 1516953344,
+		"bits": 453045594,
+		"nonce": 0
+	},
+	"transactions": [{
+		"hash": "90615ec007877bd53aa7e8b8d9c1f285be1923c8df3af2cab30974b11d65957a",
+		"version": 672,
+		"inputs": [{
+			"prevTxId": "3d8125f2aeb71d53140700d25ea6e82c0fabcfec5c45b4da0a30d78d8644c36f",
+			"outputIndex": 1,
+			"sequenceNumber": 4294967295,
+			"script": "",
+			"witnesses": [
+                "3045022100c02baccae5466a318a8e9c587af37e6549622676fad33edf0c4faa2b6efe73ed02206bf6f8b3d8c79ef38bbd43693ad21332b61639c08b869807fe4c3cc899f318dd01",
+                "02087ad9aa7be66b8dd4a40869edb2f236df8e4030eb28ec600bf71abd6f093c95"
+            ],
+			"scriptString": ""
+		}],
+		"outputs": [{
+			"type": 4,
+			"satoshis": 0,
+			"script": "",
+			"data": "e452010007f3c5f9bd03"
+		}, {
+			"type": 1,
+			"satoshis": 163143037062,
+			"script": "76a914464d8028cd25b1c03630b29326235e46c45a0fce88ac"
+		}],
+		"nLockTime": 0
+	}],
+	"blockSig": "304402203095c8df8d181ec7a799210f95bf12ce08add9dffd11acb93f52d3b63b0a87e602203cec9db08107f45a258ed8cc739f79ce0c46c05a6e5d0d033c35731b63874e38"
+}

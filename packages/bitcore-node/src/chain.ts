@@ -7,4 +7,8 @@ module.exports = {
     lib: require('bitcore-lib-cash'),
     p2p: require('bitcore-p2p-cash'),
   },
+  PART: {
+    lib: require('bitcore-lib-particl'),
+    p2p: require('bitcore-p2p-particl'),
+  },
 }

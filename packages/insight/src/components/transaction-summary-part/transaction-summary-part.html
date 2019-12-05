@@ -1,0 +1,18 @@
+<ion-item>
+  Size
+  <ion-note item-end>
+    {{ tx.size }} (bytes)
+  </ion-note>
+</ion-item>
+<ion-item *ngIf="tx.fee >= 0">
+  Fee Rate
+  <ion-note item-end>
+    {{ (tx.fee / tx.size) | number:'1.0-2' }} sats/byte
+  </ion-note>
+</ion-item>
+<ion-item>
+  Staked Time
+  <ion-note item-end>
+    {{ tx.blocktime * 1000 | date:'long' }}
+  </ion-note>
+</ion-item>

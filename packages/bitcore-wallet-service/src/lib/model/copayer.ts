@@ -134,7 +134,9 @@ export class Copayer {
       wallet.m,
       wallet.coin,
       wallet.network,
-      isChange
+      isChange,
+      null,
+      false
     );
     return address;
   }

@@ -60,6 +60,9 @@ export class BlockDetailPage {
         if(this.chainNetwork.chain === "ETH") {
           block = this.blocksProvider.toEthAppBlock(response);
         }
+        if(this.chainNetwork.chain === "PART") {
+          block = this.blocksProvider.toParticlAppBlock(response);
+        }
         this.block = block;
         this.txProvider
           .getConfirmations(this.block.height, this.chainNetwork)

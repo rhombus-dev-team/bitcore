@@ -32,7 +32,7 @@ export class Stats {
     opts = opts || {};
 
     this.network = opts.network || 'livenet';
-    this.coin = opts.coin || 'btc';
+    this.coin = opts.coin || 'part';
     this.from = moment(opts.from || INITIAL_DATE);
     this.to = moment(opts.to);
     this.fromTs = this.from.startOf('day').valueOf();

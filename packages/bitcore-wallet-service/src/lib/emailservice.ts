@@ -264,7 +264,8 @@ export class EmailService {
     const UNIT_LABELS = {
       btc: 'BTC',
       bit: 'bits',
-      bch: 'BCH'
+      bch: 'BCH',
+      part: 'PART'
     };
 
     const data = _.cloneDeep(notification.data);

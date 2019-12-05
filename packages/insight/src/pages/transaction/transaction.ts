@@ -61,6 +61,9 @@ export class TransactionPage {
         if(this.chainNetwork.chain === "ETH") {
           tx = this.txProvider.toEthAppTx(response);
         }
+        if(this.chainNetwork.chain === "PART") {
+          tx = this.txProvider.toParticlAppTx(response);
+        }
         this.tx = tx;
         this.loading = false;
         this.txProvider

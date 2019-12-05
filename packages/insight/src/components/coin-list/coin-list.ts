@@ -19,7 +19,7 @@ export class CoinListComponent implements OnInit {
   public coins: any = [];
   public showTransactions: boolean;
   public loading;
-  public limit = 10;
+  public limit = 20;
   public chunkSize = 100;
 
   constructor(

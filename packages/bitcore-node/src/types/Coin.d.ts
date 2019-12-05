@@ -12,6 +12,26 @@ export interface CoinJSON {
   spentTxid: string;
   spentHeight: number;
   confirmations?: number;
+  witnesses?: string[];
+  type?: number;
+  scriptInfo?: {
+    type: string;
+    asm: string;
+  }
+  coinstake?: boolean;
+  data?: string;
+  dataInfo?: any[];
+  valueCommitment?: string;
+  num_inputs?: number;
+  ring_size?: number;
+  rangeproof?: string;
+  rangeproofInfo?: {
+    exp?: number;
+    mantissa?: number;
+    min_value?: number;
+    max_value?: number;
+    size: number;
+  };
 }
 
 export interface CoinListingJSON {

@@ -1,0 +1,30 @@
+  <ion-item>
+    Merkle Root
+    <ion-note item-end>
+      <button [copyToClipboard]="block.merkleroot">
+        <ion-icon md="md-copy"></ion-icon>
+      </button>
+      {{ block.merkleroot }}
+    </ion-note>
+  </ion-item>
+  <ion-item>
+    Witness Merkle Root
+    <ion-note item-end>
+      <button [copyToClipboard]="block.witnessmerkleroot">
+        <ion-icon md="md-copy"></ion-icon>
+      </button>
+      {{ block.witnessmerkleroot }}
+    </ion-note>
+  </ion-item>
+  <ion-item *ngIf="block.bits">
+    Bits
+    <ion-note item-end>
+      {{ block.bits }}
+    </ion-note>
+  </ion-item>
+  <ion-item *ngIf="block.version">
+    Version
+    <ion-note item-end>
+      {{ block.version }}
+    </ion-note>
+  </ion-item>

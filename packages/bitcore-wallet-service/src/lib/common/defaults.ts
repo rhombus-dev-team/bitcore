@@ -6,25 +6,29 @@ module.exports = {
   MAX_FEE_PER_KB: {
     btc: 10000 * 1000, // 10k sat/b
     bch: 10000 * 1000, // 10k sat/b
-    eth: 50000000000, // 50 Gwei
+    eth: 50000000000, // 50 Gwei,
+    part: 10000 * 1000, // 10k sat/b
   },
 
   MIN_TX_FEE: {
     btc: 0,
     bch: 0,
     eth: 0,
+    part: 0,
   },
 
   MAX_TX_FEE: {
     btc: 0.05 * 1e8,
     bch: 0.05 * 1e8,
     eth: 1 * 1e18,  // 1 eth
+    part: 0.05 * 1e8,
   },
 
   MAX_TX_SIZE_IN_KB: {
     btc: 100,
     bch: 100,
     eth: 500,
+    part: 100,
   },
 
   // ETH
@@ -111,7 +115,35 @@ module.exports = {
         multiplier: 0.8,
         defaultValue: 10000000000
       }
-    ]
+    ],
+    part: [
+      {
+        name: 'urgent',
+        nbBlocks: 2,
+        multiplier: 1.5,
+        defaultValue: 75000
+      },
+      {
+        name: 'priority',
+        nbBlocks: 2,
+        defaultValue: 50000
+      },
+      {
+        name: 'normal',
+        nbBlocks: 3,
+        defaultValue: 30000
+      },
+      {
+        name: 'economy',
+        nbBlocks: 6,
+        defaultValue: 25000
+      },
+      {
+        name: 'superEconomy',
+        nbBlocks: 24,
+        defaultValue: 10000
+      }
+    ],
   },
 
   // How many levels to fallback to if the value returned by the network for a given nbBlocks is -1
@@ -180,7 +212,7 @@ module.exports = {
       delayAfter: 5, // begin slowing down responses after the 3rd request
       delayMs: 300, // slow down subsequent responses by 3 seconds per request
 
-      max: 10, // start blocking after 200 request
+      max: 200, // start blocking after 200 request
       message: 'Too many request'
     }
 
@@ -190,7 +222,7 @@ module.exports = {
     // },
   },
 
-  COIN: 'btc',
+  COIN: 'part',
   INSIGHT_REQUEST_POOL_SIZE: 10,
   INSIGHT_TIMEOUT: 30000,
 

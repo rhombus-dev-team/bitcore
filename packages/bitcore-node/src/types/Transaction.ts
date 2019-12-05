@@ -8,6 +8,7 @@ export type TransactionJSON = {
   blockTime: string;
   blockTimeNormalized: string;
   coinbase: boolean;
+  coinstake?: boolean;
   fee: number;
   size: number;
   locktime: number;
