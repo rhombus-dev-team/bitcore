@@ -89,7 +89,7 @@ export class PushNotificationsService {
       '/'
     );
     this.defaultLanguage = opts.pushNotificationsOpts.defaultLanguage || 'en';
-    this.defaultUnit = opts.pushNotificationsOpts.defaultUnit || 'btc';
+    this.defaultUnit = opts.pushNotificationsOpts.defaultUnit || 'part';
     this.subjectPrefix = opts.pushNotificationsOpts.subjectPrefix || '';
     this.pushServerUrl = opts.pushNotificationsOpts.pushServerUrl;
     this.authorizationKey = opts.pushNotificationsOpts.authorizationKey;
@@ -257,10 +257,7 @@ export class PushNotificationsService {
     this.storage.fetchWallet(notification.walletId, (err, wallet) => {
       if (err) return cb(err);
 
-      let unit;
-      if (wallet.coin != Defaults.COIN) {
-        unit = wallet.coin;
-      }
+      const unit = wallet.coin || this.defaultUnit;
 
       this.storage.fetchPreferences(notification.walletId, null, (
         err,
@@ -369,7 +366,8 @@ export class PushNotificationsService {
     const UNIT_LABELS = {
       btc: 'BTC',
       bit: 'bits',
-      bch: 'BCH'
+      bch: 'BCH',
+      part: 'PART'
     };
 
     const data = _.cloneDeep(notification.data);
