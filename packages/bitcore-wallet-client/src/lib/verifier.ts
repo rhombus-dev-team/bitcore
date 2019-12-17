@@ -26,7 +26,7 @@ export class Verifier {
   static checkAddress(credentials, address) {
     $.checkState(credentials.isComplete());
 
-    var local = Utils.deriveAddress(address.type || credentials.addressType, credentials.publicKeyRing, address.path, credentials.m, credentials.network, credentials.coin);
+    var local = Utils.deriveAddress(address.type || credentials.addressType, credentials.publicKeyRing, address.path, credentials.m, credentials.network, credentials.coin, address.isSha256);
     return (local.address == address.address &&
       _.difference(local.publicKeys, address.publicKeys).length === 0);
   }
@@ -64,7 +64,7 @@ export class Verifier {
         error = true;
       } else {
         var hash = Utils.getCopayerHash(copayer.encryptedName || copayer.name, copayer.xPubKey, copayer.requestPubKey);
-        if (!Utils.verifyMessage(hash, copayer.signature, walletPubKey)) {
+        if (!Utils.verifyMessage(hash, copayer.signature, walletPubKey, credentials.coin)) {
           log.error('Invalid signatures in server response');
           error = true;
         }
@@ -137,7 +137,7 @@ export class Verifier {
     if (txp.proposalSignaturePubKey) {
 
       // Verify it...
-      if (!Utils.verifyRequestPubKey(txp.proposalSignaturePubKey, txp.proposalSignaturePubKeySig, creatorKeys.xPubKey))
+      if (!Utils.verifyRequestPubKey(txp.proposalSignaturePubKey, txp.proposalSignaturePubKeySig, creatorKeys.xPubKey, (txp.coin || 'btc')))
         return false;
 
       creatorSigningPubKey = txp.proposalSignaturePubKey;
@@ -155,7 +155,7 @@ export class Verifier {
     }
 
     log.debug('Regenerating & verifying tx proposal hash -> Hash: ', hash, ' Signature: ', txp.proposalSignature);
-    if (!Utils.verifyMessage(hash, txp.proposalSignature, creatorSigningPubKey))
+    if (!Utils.verifyMessage(hash, txp.proposalSignature, creatorSigningPubKey, (txp.coin || 'btc')))
       return false;
 
     if (Constants.UTXO_COINS.includes(txp.coin) &&  !this.checkAddress(credentials, txp.changeAddress))

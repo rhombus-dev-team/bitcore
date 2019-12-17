@@ -19,7 +19,8 @@ var Bitcore = CWC.BitcoreLib;
 var Bitcore_ = {
   btc: CWC.BitcoreLib,
   bch: CWC.BitcoreLibCash,
-  eth: CWC.BitcoreLib
+  eth: CWC.BitcoreLib,
+  part: CWC.BitcoreLibParticl
 };
 var Mnemonic = require('bitcore-mnemonic');
 var url = require('url');
@@ -63,6 +64,7 @@ export class API extends EventEmitter {
   // Expose bitcore
   static Bitcore = CWC.BitcoreLib;
   static BitcoreCash = CWC.BitcoreLibCash;
+  static BitcoreParticl = CWC.BitcoreLibParticl;
 
   constructor(opts?) {
     super();
@@ -255,20 +257,20 @@ export class API extends EventEmitter {
 
     var c = this.credentials;
 
-    var testMessageSigning = (xpriv, xpub) => {
+    var testMessageSigning = (xpriv, xpub, coin) => {
       var nonHardenedPath = 'm/0/0';
       var message =
         'Lorem ipsum dolor sit amet, ne amet urbanitas percipitur vim, libris disputando his ne, et facer suavitate qui. Ei quidam laoreet sea. Cu pro dico aliquip gubergren, in mundi postea usu. Ad labitur posidonium interesset duo, est et doctus molestie adipiscing.';
       var priv = xpriv.deriveChild(nonHardenedPath).privateKey;
-      var signature = Utils.signMessage(message, priv);
+      var signature = Utils.signMessage(message, priv, coin);
       var pub = xpub.deriveChild(nonHardenedPath).publicKey;
-      return Utils.verifyMessage(message, signature, pub);
+      return Utils.verifyMessage(message, signature, pub, coin);
     };
 
     var testHardcodedKeys = () => {
       var words =
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-      var xpriv = Mnemonic(words).toHDPrivateKey();
+      var xpriv = Mnemonic(words).toHDPrivateKey(opts.passphrase, 'livenet', 'btc');
 
       if (
         xpriv.toString() !=
@@ -286,7 +288,7 @@ export class API extends EventEmitter {
       var xpub = Bitcore.HDPublicKey.fromString(
         'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj'
       );
-      return testMessageSigning(xpriv, xpub);
+      return testMessageSigning(xpriv, xpub, 'btc');
     };
 
     // TODO => Key refactor to Key class.
@@ -299,15 +301,15 @@ export class API extends EventEmitter {
       var xpriv;
       if (words && (!c.mnemonicHasPassphrase || opts.passphrase)) {
         var m = new Mnemonic(words);
-        xpriv = m.toHDPrivateKey(opts.passphrase, c.network);
+        xpriv = m.toHDPrivateKey(opts.passphrase, c.network, opts.coin);
       }
       if (!xpriv) {
-        xpriv = new Bitcore.HDPrivateKey(c.xPrivKey);
+        xpriv = new Bitcore_[opts.coin || 'btc'].HDPrivateKey(c.xPrivKey);
       }
       xpriv = xpriv.deriveChild(c.getBaseAddressDerivationPath());
-      var xpub = new Bitcore.HDPublicKey(c.xPubKey);
+      var xpub = new Bitcore_[opts.coin || 'btc'].HDPublicKey(c.xPubKey);
 
-      return testMessageSigning(xpriv, xpub);
+      return testMessageSigning(xpriv, xpub, (opts.coin || 'btc'));
     };
 
     var hardcodedOk = true;
@@ -719,7 +721,7 @@ export class API extends EventEmitter {
       args.xPubKey,
       args.requestPubKey
     );
-    args.copayerSignature = Utils.signMessage(hash, walletPrivKey);
+    args.copayerSignature = Utils.signMessage(hash, walletPrivKey, opts.coin);
 
     var url = '/v2/wallets/' + walletId + '/copayers';
     this.request.post(url, args, (err, body) => {
@@ -1274,6 +1276,7 @@ export class API extends EventEmitter {
   // * @param {number} opts.feeLevel[='normal'] - Optional. Specify the fee level for this TX ('priority', 'normal', 'economy', 'superEconomy').
   // * @param {number} opts.feePerKb - Optional. Specify the fee per KB for this TX (in satoshi).
   // * @param {string} opts.changeAddress - Optional. Use this address as the change address for the tx. The address should belong to the wallet. In the case of singleAddress wallets, the first main address will be used.
+  // * @param {string} opts.coldStakingAddress - Optional. Use this address as the cold staking address or xpub key for the tx. 
   // * @param {Boolean} opts.sendMax - Optional. Send maximum amount of funds that make sense under the specified fee/feePerKb conditions. (defaults to false).
   // * @param {string} opts.payProUrl - Optional. Paypro URL for peers to verify TX
   // * @param {Boolean} opts.excludeUnconfirmedUtxos[=false] - Optional. Do not use UTXOs of unconfirmed transactions as inputs
@@ -1327,7 +1330,8 @@ export class API extends EventEmitter {
     var args = {
       proposalSignature: Utils.signMessage(
         hash,
-        this.credentials.requestPrivKey
+        this.credentials.requestPrivKey,
+        this.credentials.coin
       )
     };
 
@@ -1344,6 +1348,8 @@ export class API extends EventEmitter {
   // *
   // * @param {Object} opts
   // * @param {Boolean} opts.ignoreMaxGap[=false]
+  // * @param {Boolean} opts.isChange[=false] - Is it a change address
+  // * @param {Boolean} opts.sha256[=false] - Is it a sha256 address
   // * @param {Callback} cb
   // * @returns {Callback} cb - Return error or the address
   // */
@@ -1885,7 +1891,7 @@ export class API extends EventEmitter {
     $.shouldBeString(opts.signature, 'no signature at addAccess()');
 
     opts = opts || {};
-    var requestPubKey = new Bitcore.PrivateKey(opts.requestPrivKey)
+    var requestPubKey = new Bitcore_[this.credentials.coin].PrivateKey(opts.requestPrivKey)
       .toPublicKey()
       .toString();
     var copayerId = this.credentials.copayerId;
@@ -2545,5 +2551,35 @@ export class API extends EventEmitter {
         return callback(null, k, resultingClients);
       }
     );
+  }
+
+  /**
+   * Update the wallet cold staking setup
+   * @param {Object} opts
+   * @param {string} opts.label - Label for the staking node
+   * @param {string} opts.staking_key - Either the cold staking bech32 address or xpub key
+   */
+  updateColdStakingSetup(opts, cb) {
+    this.request.put('/v1/coldstakingsetup/', opts, cb);
+  }
+
+  /**
+   * Get the wallet cold staking setup
+   * @return {Object} config
+   * @return {string} config.label - Label for the staking node
+   * @return {string} config.staking_key - Either the cold staking bech32 address or xpub key
+   */
+  getColdStakingSetup = function(cb) {
+    this.request.get('/v1/coldstakingsetup/', cb);
+  }
+
+  /**
+   * Get the cold staking addresses
+   * @return {Object} addresses
+   * @return {string} addresses.staking_address - Staking address
+   * @return {string} addresses.spend_address - Spend address
+   */
+  getColdStakingAddresses = function(cb) {
+    this.request.get('/v1/coldstakingaddresses/', cb);
   }
 }

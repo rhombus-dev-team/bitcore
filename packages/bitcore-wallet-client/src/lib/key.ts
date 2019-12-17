@@ -292,6 +292,8 @@ export class Key {
       coinCode = '0';
     } else if (opts.coin == 'eth') {
       coinCode = '60';
+    } else if (opts.coin == 'part') {
+      coinCode = '44';
     } else {
       throw new Error('unknown coin: ' + opts.coin);
     }
@@ -365,7 +367,7 @@ export class Key {
     var requestPubKey = requestPrivKey.toPublicKey().toString();
 
     var xPriv = this.derive(password, opts.path);
-    var signature = Utils.signRequestPubKey(requestPubKey, xPriv);
+    var signature = Utils.signRequestPubKey(requestPubKey, xPriv, 'part');
     requestPrivKey = requestPrivKey.toString();
 
     return {

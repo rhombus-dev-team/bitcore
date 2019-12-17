@@ -1,6 +1,6 @@
 'use strict';
 
-import { BitcoreLib, BitcoreLibCash, Deriver, Transactions } from 'crypto-wallet-core';
+import { BitcoreLib, BitcoreLibCash, BitcoreLibParticl, Deriver, Transactions } from 'crypto-wallet-core';
 
 import * as _ from 'lodash';
 import { Constants } from './constants';
@@ -14,7 +14,8 @@ var Bitcore = BitcoreLib;
 var Bitcore_ = {
   btc: Bitcore,
   bch: BitcoreLibCash,
-  eth: Bitcore
+  eth: Bitcore,
+  part: BitcoreLibParticl,
 };
 var PrivateKey = Bitcore.PrivateKey;
 var PublicKey = Bitcore.PublicKey;
@@ -85,20 +86,20 @@ export class Utils {
     return ret;
   }
 
-  static signMessage(text, privKey) {
+  static signMessage(text, privKey, coin) {
     $.checkArgument(text);
-    var priv = new PrivateKey(privKey);
+    var priv = new Bitcore_[coin || 'btc'].PrivateKey(privKey);
     var hash = this.hashMessage(text);
     return crypto.ECDSA.sign(hash, priv, 'little').toString();
   }
 
-  static verifyMessage(text, signature, pubKey) {
+  static verifyMessage(text, signature, pubKey, coin) {
     $.checkArgument(text);
     $.checkArgument(pubKey);
 
     if (!signature) return false;
 
-    var pub = new PublicKey(pubKey);
+    var pub = new Bitcore_[coin || 'btc'].PublicKey(pubKey);
     var hash = this.hashMessage(text);
 
     try {
@@ -145,7 +146,7 @@ export class Utils {
     return { _input, addressIndex, isChange };
   }
 
-  static deriveAddress(scriptType, publicKeyRing, path, m, network, coin) {
+  static deriveAddress(scriptType, publicKeyRing, path, m, network, coin, sha256) {
     $.checkArgument(_.includes(_.values(Constants.SCRIPT_TYPES), scriptType));
 
     coin = coin || 'btc';
@@ -158,12 +159,12 @@ export class Utils {
     var bitcoreAddress;
     switch (scriptType) {
       case Constants.SCRIPT_TYPES.P2SH:
-        bitcoreAddress = bitcore.Address.createMultisig(publicKeys, m, network);
+        bitcoreAddress = bitcore.Address.createMultisig(publicKeys, m, network, null, sha256);
         break;
       case Constants.SCRIPT_TYPES.P2PKH:
         $.checkState(_.isArray(publicKeys) && publicKeys.length == 1);
         if (Constants.UTXO_COINS.includes(coin)) {
-          bitcoreAddress = bitcore.Address.fromPublicKey(publicKeys[0], network);
+          bitcoreAddress = bitcore.Address.fromPublicKey(publicKeys[0], network, sha256);
         } else {
           const { addressIndex, isChange } = this.parseDerivationPath(path);
           const [{ xPubKey }] = publicKeyRing;
@@ -188,25 +189,24 @@ export class Utils {
   static xPubToCopayerId(coin, xpub) {
     // this is only because we allowed coin = 0' wallets for BCH
     // for the  "wallet duplication" feature
-
-    var str = coin == 'btc' ? xpub : coin + xpub;
+    var str = coin == 'part' ? xpub : coin + xpub;
 
     var hash = sjcl.hash.sha256.hash(str);
     return sjcl.codec.hex.fromBits(hash);
   }
 
-  static signRequestPubKey(requestPubKey, xPrivKey) {
-    var priv = new Bitcore.HDPrivateKey(xPrivKey).deriveChild(
+  static signRequestPubKey(requestPubKey, xPrivKey, coin) {
+    var priv = new Bitcore_[coin].HDPrivateKey(xPrivKey).deriveChild(
       Constants.PATHS.REQUEST_KEY_AUTH
     ).privateKey;
-    return this.signMessage(requestPubKey, priv);
+    return this.signMessage(requestPubKey, priv, coin);
   }
 
-  static verifyRequestPubKey(requestPubKey, signature, xPubKey) {
-    var pub = new Bitcore.HDPublicKey(xPubKey).deriveChild(
+  static verifyRequestPubKey(requestPubKey, signature, xPubKey, coin) {
+    var pub = new Bitcore_[coin].HDPublicKey(xPubKey).deriveChild(
       Constants.PATHS.REQUEST_KEY_AUTH
     ).publicKey;
-    return this.verifyMessage(requestPubKey, signature, pub.toString());
+    return this.verifyMessage(requestPubKey, signature, pub.toString(), coin);
   }
 
   static formatAmount(satoshis, unit, opts?) {
@@ -289,7 +289,7 @@ export class Utils {
       }
 
       t.fee(txp.fee);
-      t.change(txp.changeAddress.address);
+      t.change(txp.changeAddress.address, txp.coldStakingAddress);
 
       // Shuffle outputs for improved privacy
       if (t.outputs.length > 1) {

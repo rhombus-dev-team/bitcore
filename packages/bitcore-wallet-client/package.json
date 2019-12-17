@@ -18,11 +18,11 @@
   ],
   "engine": "node >= 8.0.0",
   "repository": {
-    "url": "git@github.com:bitpay/bitcore-wallet-client.git",
+    "url": "git@github.com:particl/bitcore-wallet-client.git",
     "type": "git"
   },
   "bugs": {
-    "url": "https://github.com/bitpay/bitcore-wallet-client/issues"
+    "url": "https://github.com/particl/bitcore-wallet-client/issues"
   },
   "dependencies": {
     "ajv": "^6.10.0",
