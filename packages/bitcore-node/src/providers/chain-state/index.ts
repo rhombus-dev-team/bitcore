@@ -27,6 +27,10 @@ class ChainStateProxy implements CSP.ChainStateProvider {
     return this.get(params).getBlock(params);
   }
 
+  async getBlockBeforeTime(params: CSP.GetBlockBeforeTimeParams) {
+    return this.get(params).getBlockBeforeTime(params);
+  }
+
   streamBlocks(params: CSP.StreamBlocksParams) {
     return this.get(params).streamBlocks(params);
   }
@@ -39,7 +43,7 @@ class ChainStateProxy implements CSP.ChainStateProvider {
     return this.get(params).getAuthhead(params);
   }
 
-  getDailyTransactions(params: { chain: string; network: string }) {
+  getDailyTransactions(params: CSP.DailyTransactionsParams) {
     return this.get(params).getDailyTransactions(params);
   }
 

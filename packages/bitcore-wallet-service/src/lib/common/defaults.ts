@@ -32,7 +32,8 @@ module.exports = {
   },
 
   // ETH
-  DEFAULT_GAS_LIMIT: 21000,
+  DEFAULT_GAS_LIMIT: 200000,
+  MIN_GAS_LIMIT: 21000,
 
   MAX_KEYS: 100,
 
@@ -233,6 +234,8 @@ module.exports = {
   SERVER_EXE_TIME: 40 * 1000 * 1.5,
 
   BE_KEY_SALT: 'bws-auth-keysalt',
+
+  NEW_BLOCK_THROTTLE_TIME_MIN: 5,
 
   BROADCAST_RETRY_TIME: 350, // ms
 };

@@ -161,6 +161,18 @@ export class BlocksProvider {
     return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]>(url);
   }
 
+  public getCoinsForBlockHash(
+    blockHash: string,
+    chainNetwork: ChainNetwork,
+    limit: number,
+    page: number
+  ): Observable<any> {
+    const url = `${this.api.getUrl(
+      chainNetwork
+    )}/block/${blockHash}/coins/${limit}/${page}`;
+    return this.httpClient.get(url);
+  }
+
   /**
    * example: http://localhost:8100/api/BTC/regtest/block?since=582&limit=100&paging=height&direction=1
    */
@@ -169,7 +181,9 @@ export class BlocksProvider {
     numBlocks: number = 10,
     chainNetwork: ChainNetwork
   ): Observable<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]> {
-    const url = `${this.api.getUrl(chainNetwork)}/block?since=${since}&limit=${numBlocks}&paging=height&direction=-1`;
+    const url = `${this.api.getUrl(
+      chainNetwork
+    )}/block?since=${since}&limit=${numBlocks}&paging=height&direction=-1`;
     return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]>(url);
   }
 

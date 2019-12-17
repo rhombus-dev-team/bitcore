@@ -8,7 +8,13 @@ import { TransactionListComponent } from './transaction-list';
 
 @NgModule({
   declarations: [TransactionListComponent],
-  imports: [IonicModule, TransactionDetailsEthComponentModule, TransactionDetailsPartComponentModule, TransactionDetailsComponentModule, LoaderComponentModule],
+  imports: [
+    IonicModule,
+    TransactionDetailsEthComponentModule,
+    TransactionDetailsPartComponentModule,
+    TransactionDetailsComponentModule,
+    LoaderComponentModule
+  ],
   exports: [TransactionListComponent]
 })
 export class TransactionListComponentModule {}

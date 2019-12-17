@@ -1,5 +1,6 @@
 import { Transactions } from 'crypto-wallet-core';
 import _ from 'lodash';
+import { ChainService } from '../chain/index';
 import { TxProposalLegacy } from './txproposal_legacy';
 import { TxProposalAction } from './txproposalaction';
 
@@ -9,6 +10,7 @@ const log = require('npmlog');
 log.debug = log.verbose;
 log.disableColor();
 
+<<<<<<< HEAD
 const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
@@ -16,6 +18,8 @@ const Bitcore = {
   part: require('bitcore-lib-particl')
 };
 
+=======
+>>>>>>> master
 const Common = require('../common');
 const Constants = Common.Constants,
   Defaults = Common.Defaults,
@@ -42,6 +46,8 @@ export interface ITxProposal {
     address: string;
     toAddress?: string;
     message?: string;
+    data?: string;
+    gasLimit?: number;
     script?: string;
   }>;
   outputOrder: number;
@@ -66,9 +72,10 @@ export interface ITxProposal {
   proposalSignaturePubKeySig: string;
   lowFees: boolean;
   nonce?: number;
-  gasLimit?: number;
   gasPrice?: number;
-  data?: string;
+  gasLimit?: number; // Backward compatibility for BWC <= 8.9.0
+  data?: string; // Backward compatibility for BWC <= 8.9.0
+  tokenAddress?: string;
 }
 
 export class TxProposal {
@@ -92,6 +99,8 @@ export class TxProposal {
     address?: string;
     toAddress?: string;
     message?: string;
+    data?: string;
+    gasLimit?: number;
     script?: string;
     satoshis?: number;
   }>;
@@ -115,12 +124,17 @@ export class TxProposal {
   proposalSignature: string;
   proposalSignaturePubKey: string;
   proposalSignaturePubKeySig: string;
-  raw?: any;
+  raw?: Array<string> | string;
   nonce?: number;
-  gasLimit?: number;
   gasPrice?: number;
+<<<<<<< HEAD
   data?: string;
   xpubKeys?: string[];
+=======
+  gasLimit?: number; // Backward compatibility for BWC <= 8.9.0
+  data?: string; // Backward compatibility for BWC <= 8.9.0
+  tokenAddress?: string;
+>>>>>>> master
 
   static create(opts) {
     opts = opts || {};
@@ -146,7 +160,7 @@ export class TxProposal {
     x.changeAddress = opts.changeAddress;
     x.coldStakingAddress = opts.coldStakingAddress;
     x.outputs = _.map(opts.outputs, (output) => {
-      return _.pick(output, ['amount', 'toAddress', 'message', 'script']);
+      return _.pick(output, ['amount', 'toAddress', 'message', 'data', 'gasLimit', 'script']);
     });
     x.outputOrder = _.range(x.outputs.length + 1);
     // if (!opts.noShuffleOutputs) {
@@ -178,11 +192,12 @@ export class TxProposal {
     x.setInputs(opts.inputs);
     x.fee = opts.fee;
 
-    x.gasLimit = opts.gasLimit;
     x.gasPrice = opts.gasPrice;
     x.from = opts.from;
     x.nonce = opts.nonce;
-    x.data = opts.data;
+    x.gasLimit = opts.gasLimit; // Backward compatibility for BWC <= 8.9.0
+    x.data = opts.data; // Backward compatibility for BWC <= 8.9.0
+    x.tokenAddress = opts.tokenAddress;
 
     return x;
   }
@@ -231,11 +246,12 @@ export class TxProposal {
     x.proposalSignaturePubKey = obj.proposalSignaturePubKey;
     x.proposalSignaturePubKeySig = obj.proposalSignaturePubKeySig;
 
-    x.gasLimit = obj.gasLimit;
     x.gasPrice = obj.gasPrice;
     x.from = obj.from;
     x.nonce = obj.nonce;
-    x.data = obj.data;
+    x.gasLimit = obj.gasLimit; // Backward compatibility for BWC <= 8.9.0
+    x.data = obj.data; // Backward compatibility for BWC <= 8.9.0
+    x.tokenAddress = obj.tokenAddress;
 
     if (x.status == 'broadcasted') {
       x.raw = obj.raw;
@@ -271,6 +287,7 @@ export class TxProposal {
     $.checkState(
       Utils.checkValueInCollection(this.addressType, Constants.SCRIPT_TYPES)
     );
+<<<<<<< HEAD
 
     if (!Constants.UTXO_COINS[this.coin.toUpperCase()]) {
       const rawTx = Transactions.create({
@@ -359,6 +376,9 @@ export class TxProposal {
 
       return t;
     }
+=======
+    return ChainService.buildTx(this);
+>>>>>>> master
   }
 
   _getCurrentSignatures() {
@@ -378,7 +398,7 @@ export class TxProposal {
     const t = this._buildTx();
     const sigs = this._getCurrentSignatures();
     _.each(sigs, (x) => {
-      this._addSignaturesToBitcoreTx(t, x.signatures, x.xpub);
+      ChainService.addSignaturesToBitcoreTx(this.coin, t, this.inputs, this.inputPaths, x.signatures, x.xpub);
     });
 
     return t;
@@ -482,6 +502,7 @@ export class TxProposal {
     this._updateStatus();
   }
 
+<<<<<<< HEAD
   _addSignaturesToBitcoreTxBitcoin(tx, signatures, xpub) {
     const bitcore = Bitcore[this.coin];
 
@@ -529,11 +550,13 @@ export class TxProposal {
     }
   }
 
+=======
+>>>>>>> master
   sign(copayerId, signatures, xpub) {
     try {
       // Tests signatures are OK
       const tx = this.getBitcoreTx();
-      this._addSignaturesToBitcoreTx(tx, signatures, xpub);
+      ChainService.addSignaturesToBitcoreTx(this.coin, tx, this.inputs, this.inputPaths, signatures, xpub);
       this.addAction(copayerId, 'accept', null, signatures, xpub);
 
       if (this.status == 'accepted') {

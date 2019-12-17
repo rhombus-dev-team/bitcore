@@ -21,6 +21,7 @@ export type ICoin = {
   spentTxid: string;
   spentHeight: number;
   confirmations?: number;
+  sequenceNumber?: number;
   witnesses?: string[];
   type?: number;
   data?: Buffer;
@@ -218,6 +219,7 @@ export class CoinModel extends BaseModel<ICoin> {
       script: coin.script.toString('hex'),
       value: valueOrDefault(coin.value, -1),
       confirmations: valueOrDefault(coin.confirmations, -1),
+      sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined)
       witnesses: valueOrDefault(coin.witnesses, []),
       type: valueOrDefault(coin.type, -1),
       scriptInfo,

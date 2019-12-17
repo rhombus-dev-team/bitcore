@@ -1,6 +1,6 @@
 {
   "name": "crypto-wallet-core",
-  "version": "8.8.4",
+  "version": "8.13.0",
   "description": "A multi-currency support library for address derivation, private key creation, and transaction creation",
   "main": "./ts_build/src/index.js",
   "types": "./ts_build/src/index.d.ts",
@@ -9,6 +9,7 @@
     "clean": "rm -rf ts_build",
     "compile": "npm run clean && npm run build",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "lint-fix": "tslint --fix -c tslint.json 'src/**/*.ts'",
     "test": "npm run compile && mocha -r ts-node/register test/*.ts",
     "pub": "npm run compile && npm publish"
   },
@@ -21,10 +22,13 @@
   "author": "Micah Riggan",
   "license": "MIT",
   "dependencies": {
-    "bitcore-lib": "^8.8.4",
-    "bitcore-lib-cash": "^8.8.4",
-    "bitcore-lib-particl": "^8.8.4",
+    "bitcore-lib": "^8.13.0",
+    "bitcore-lib-cash": "^8.13.0",
+    "bitcore-lib-particl": "^8.13.0",
     "ethers": "4.0.37",
+    "ripple-binary-codec": "0.2.4",
+    "ripple-keypairs": "0.11.0",
+    "ripple-lib": "1.4.2",
     "web3": "1.2.1"
   },
   "devDependencies": {

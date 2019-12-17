@@ -1,7 +1,13 @@
 import { Component, Input, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ApiProvider, ChainNetwork } from '../../providers/api/api';
-import { ApiEthBlock, ApiParticlBlock, ApiUtxoCoinBlock, AppBlock, BlocksProvider } from '../../providers/blocks/blocks';
+import {
+  ApiEthBlock,
+  ApiParticlBlock,
+  ApiUtxoCoinBlock,
+  AppBlock,
+  BlocksProvider
+} from '../../providers/blocks/blocks';
 import { CurrencyProvider } from '../../providers/currency/currency';
 import { DefaultProvider } from '../../providers/default/default';
 import { RedirProvider } from '../../providers/redir/redir';
@@ -56,20 +62,28 @@ export class LatestBlocksComponent implements OnInit, OnDestroy {
       .getBlocks(this.chainNetwork, this.numBlocks)
       .subscribe(
         response => {
-          const blocks = response.map((block: ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock ) => {
-            if(this.chainNetwork.chain === "BTC" || this.chainNetwork.chain === "BCH") {
-              return this.blocksProvider.toUtxoCoinAppBlock(block);
+          const blocks = response.map(
+            (block: ApiEthBlock & ApiUtxoCoinBlock) => {
+              if (
+                this.chainNetwork.chain === 'BTC' ||
+                this.chainNetwork.chain === 'BCH'
+              ) {
+                return this.blocksProvider.toUtxoCoinAppBlock(block);
+              }
+              if (this.chainNetwork.chain === 'ETH') {
+                return this.blocksProvider.toEthAppBlock(block);
+              }
+              if(this.chainNetwork.chain === "PART") {
+                return this.blocksProvider.toParticlAppBlock(block);
+              }
             }
-            if(this.chainNetwork.chain === "ETH") {
-              return this.blocksProvider.toEthAppBlock(block);
-            }
-            if(this.chainNetwork.chain === "PART") {
-              return this.blocksProvider.toParticlAppBlock(block);
-            }
-           }
           );
           this.blocks = blocks;
           this.loading = false;
+          if(this.blocks[this.blocks.length - 1].height < this.numBlocks) { 
+            this.showLoadMoreButton = false;
+          }
+          
         },
         err => {
           this.subscriber.unsubscribe();
@@ -88,14 +102,19 @@ export class LatestBlocksComponent implements OnInit, OnDestroy {
       .pageBlocks(since, this.numBlocks, this.chainNetwork)
       .subscribe(
         response => {
-          const blocks = response.map((block: ApiEthBlock & ApiUtxoCoinBlock) => {
-            if(this.chainNetwork.chain === "BTC" || this.chainNetwork.chain === "BCH" || this.chainNetwork.chain === 'PART') {
-              return this.blocksProvider.toUtxoCoinAppBlock(block);
+          const blocks = response.map(
+            (block: ApiEthBlock & ApiUtxoCoinBlock) => {
+              if (
+                this.chainNetwork.chain === 'BTC' ||
+                this.chainNetwork.chain === 'BCH' ||
+                this.chainNetwork.chain === 'PART'
+              ) {
+                return this.blocksProvider.toUtxoCoinAppBlock(block);
+              }
+              if (this.chainNetwork.chain === 'ETH') {
+                return this.blocksProvider.toEthAppBlock(block);
+              }
             }
-            if(this.chainNetwork.chain === "ETH") {
-              return this.blocksProvider.toEthAppBlock(block);
-            }
-           }
           );
           this.blocks = this.blocks.concat(blocks);
           this.loading = false;

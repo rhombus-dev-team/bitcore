@@ -12,6 +12,7 @@ export interface CoinJSON {
   spentTxid: string;
   spentHeight: number;
   confirmations?: number;
+  sequenceNumber?: number;
   witnesses?: string[];
   type?: number;
   scriptInfo?: {

@@ -1,6 +1,5 @@
-import { Readable } from 'stream';
+import { Readable, Transform } from 'stream';
 import Config from '../../../config';
-import { WalletAddressStorage } from '../../../models/walletAddress';
 import { CSP } from '../../../types/namespaces/ChainStateProvider';
 import { ObjectID } from 'mongodb';
 import Web3 from 'web3';
@@ -15,6 +14,8 @@ import { EthListTransactionsStream } from './transform';
 import { ERC20Abi } from '../abi/erc20';
 import { Transaction } from 'web3/eth/types';
 import { EventLog } from 'web3/types';
+import { partition } from '../../../utils/partition';
+import { WalletAddressStorage } from '../../../models/walletAddress';
 
 interface ERC20Transfer extends EventLog {
   returnValues: {
@@ -26,7 +27,7 @@ interface ERC20Transfer extends EventLog {
 
 export class ETHStateProvider extends InternalStateProvider implements CSP.IChainStateService {
   config: any;
-  static web3?: Web3;
+  static web3 = {} as { [network: string]: Web3 };
 
   constructor(public chain: string = 'ETH') {
     super(chain);
@@ -35,13 +36,13 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
 
   async getWeb3(network: string) {
     try {
-      if (ETHStateProvider.web3) {
-        await ETHStateProvider.web3.eth.getBlockNumber();
+      if (ETHStateProvider.web3[network]) {
+        await ETHStateProvider.web3[network].eth.getBlockNumber();
       }
     } catch (e) {
-      ETHStateProvider.web3 = undefined;
+      delete ETHStateProvider.web3[network];
     }
-    if (!ETHStateProvider.web3) {
+    if (!ETHStateProvider.web3[network]) {
       const networkConfig = this.config[network];
       const provider = networkConfig.provider;
       const host = provider.host || 'localhost';
@@ -58,10 +59,9 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
           ProviderType = Web3.providers.HttpProvider;
           break;
       }
-      console.log(connUrl);
-      ETHStateProvider.web3 = new Web3(new ProviderType(connUrl));
+      ETHStateProvider.web3[network] = new Web3(new ProviderType(connUrl));
     }
-    return ETHStateProvider.web3;
+    return ETHStateProvider.web3[network];
   }
 
   async erc20For(network: string, address: string) {
@@ -159,20 +159,19 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
   async broadcastTransaction(params: CSP.BroadcastTransactionParams) {
     const { network, rawTx } = params;
     const web3 = await this.getWeb3(network);
-    return new Promise((resolve, reject) => {
-      web3.eth
-        .sendSignedTransaction(rawTx)
-        .on('transactionHash', resolve)
-        .on('error', reject);
-    });
-  }
-
-  async getWalletAddresses(walletId: ObjectID) {
-    let query = { chain: this.chain, wallet: walletId };
-    return WalletAddressStorage.collection
-      .find(query)
-      .addCursorFlag('noCursorTimeout', true)
-      .toArray();
+    const rawTxs = typeof rawTx === 'string' ? [rawTx] : rawTx;
+    const txids = new Array<string>();
+    for (const tx of rawTxs) {
+      const txid = await new Promise<string>((resolve, reject) => {
+        web3.eth
+          .sendSignedTransaction(tx)
+          .on('transactionHash', resolve)
+          .on('error', reject)
+          .catch(e => reject(e));
+      });
+      txids.push(txid);
+    }
+    return txids.length === 1 ? txids[0] : txids;
   }
 
   async streamAddressTransactions(params: CSP.StreamAddressUtxosParams) {
@@ -294,36 +293,57 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
       const query = {
         chain,
         network,
-        to: web3.utils.toChecksumAddress(args.tokenAddress),
         $or: [
           {
             wallets: wallet._id,
+            abiType: { $exists: true },
+            to: web3.utils.toChecksumAddress(args.tokenAddress),
             'abiType.type': 'ERC20',
             'abiType.name': 'transfer',
-            'wallets.0': { $exists: true },
-            abiType: { $exists: true }
+            'wallets.0': { $exists: true }
           },
           {
-            chain: 'ETH',
             abiType: { $exists: true },
+            to: web3.utils.toChecksumAddress(args.tokenAddress),
             'abiType.type': 'ERC20',
             'abiType.name': 'transfer',
             'abiType.params.0.value': { $in: walletAddresses.map(w => w.address.toLowerCase()) }
+          },
+          {
+            wallets: wallet._id,
+            abiType: { $exists: true },
+            'abiType.type': 'INVOICE',
+            'abiType.params.8.value': args.tokenAddress.toLowerCase(),
+            'wallets.0': { $exists: true }
           }
         ]
       };
-      console.log(JSON.stringify(query));
-      const erc20 = await EthTransactionStorage.collection.find(query).toArray();
-      erc20.forEach(tx => {
-        const transformed = {
-          ...tx,
-          value: tx.abiType!.params[1].value,
-          to: web3.utils.toChecksumAddress(tx.abiType!.params[0].value)
-        };
-        console.log(transformed);
-        transactionStream.push(transformed);
-      });
-      transactionStream.push(null);
+      transactionStream = EthTransactionStorage.collection
+        .find(query)
+        .sort({ blockTimeNormalized: 1 })
+        .addCursorFlag('noCursorTimeout', true)
+        .pipe(
+          new Transform({
+            objectMode: true,
+            transform: (tx: any, _, cb) => {
+              if (tx.abiType && tx.abiType.type === 'ERC20') {
+                return cb(null, {
+                  ...tx,
+                  value: tx.abiType!.params[1].value,
+                  to: web3.utils.toChecksumAddress(tx.abiType!.params[0].value)
+                });
+              }
+              if (tx.abiType && tx.abiType.type === 'INVOICE') {
+                return cb(null, {
+                  ...tx,
+                  value: tx.abiType!.params[0].value,
+                  to: tx.to
+                });
+              }
+              return cb(null, tx);
+            }
+          })
+        );
     }
     const listTransactionsStream = new EthListTransactionsStream(wallet);
     transactionStream.pipe(listTransactionsStream).pipe(res);
@@ -370,7 +390,17 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
   }
 
   async getAccountNonce(network: string, address: string) {
-    return EthTransactionStorage.collection.countDocuments({ chain: 'ETH', network, from: address, blockHeight: { $ne: -1 } });
+    const web3 = await this.getWeb3(network);
+    const count = await web3.eth.getTransactionCount(address);
+    return count;
+    /*
+     *return EthTransactionStorage.collection.countDocuments({
+     *  chain: 'ETH',
+     *  network,
+     *  from: address,
+     *  blockHeight: { $gt: -1 }
+     *});
+     */
   }
 
   async getWalletTokenTransactions(
@@ -415,6 +445,38 @@ export class ETHStateProvider extends InternalStateProvider implements CSP.IChai
       return { ...convertedBlock, confirmations };
     };
     return blocks.map(blockTransform);
+  }
+
+  async updateWallet(params: CSP.UpdateWalletParams) {
+    const { chain, network } = params;
+    const addressBatches = partition(params.addresses, 500);
+    for (let addressBatch of addressBatches) {
+      const walletAddressInserts = addressBatch.map(address => {
+        return {
+          insertOne: {
+            document: { chain, network, wallet: params.wallet._id, address, processed: false }
+          }
+        };
+      });
+
+      try {
+        await WalletAddressStorage.collection.bulkWrite(walletAddressInserts);
+      } catch (err) {
+        if (err.code !== 11000) {
+          throw err;
+        }
+      }
+
+      await EthTransactionStorage.collection.updateMany(
+        { chain, network, $or: [{ from: { $in: addressBatch } }, { to: { $in: addressBatch } }] },
+        { $addToSet: { wallets: params.wallet._id } }
+      );
+
+      await WalletAddressStorage.collection.updateMany(
+        { chain, network, address: { $in: addressBatch }, wallet: params.wallet._id },
+        { $set: { processed: true } }
+      );
+    }
   }
 }
 

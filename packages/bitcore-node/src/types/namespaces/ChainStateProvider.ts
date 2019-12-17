@@ -38,6 +38,11 @@ export declare namespace CSP {
     sinceBlock?: number | string;
     args?: Partial<{ startDate: Date; endDate: Date; date: Date } & StreamingFindOptions<IBtcBlock>>;
   };
+
+  export type GetBlockBeforeTimeParams = ChainNetwork & {
+    time?: Date | string;
+  };
+
   export type StreamBlocksParams = ChainNetwork & {
     blockId?: string;
     sinceBlock: number | string;
@@ -49,7 +54,7 @@ export declare namespace CSP {
     target: number;
   };
   export type BroadcastTransactionParams = ChainNetwork & {
-    rawTx: string;
+    rawTx: string | Array<string>;
   };
   export type CreateWalletParams = IWallet;
   export type GetWalletParams = ChainNetwork & PubKey;
@@ -92,6 +97,11 @@ export declare namespace CSP {
     limit: number;
   };
 
+  export type DailyTransactionsParams = ChainNetwork & {
+    startDate: string;
+    endDate: string;
+  };
+
   export type WalletCheckParams = ChainNetwork & {
     wallet: ObjectId;
   };
@@ -119,7 +129,9 @@ export declare namespace CSP {
 
   export type isValidParams = ChainNetwork & {
     input: string;
-  }
+  };
+
+  export type GetCoinsForTxParams = { chain: string; network: string; txid: string };
 
   export type Provider<T> = { get(params: { chain: string }): T };
   export type ChainStateProvider = Provider<IChainStateService> & IChainStateService;
@@ -128,6 +140,7 @@ export declare namespace CSP {
       params: GetBalanceForAddressParams
     ): Promise<{ confirmed: number; unconfirmed: number; balance: number }>;
     getBlock(params: GetBlockParams): Promise<IBlock>;
+    getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock>;
     streamBlocks(params: StreamBlocksParams): any;
     getFee(params: GetEstimateSmartFeeParams): any;
     broadcastTransaction(params: BroadcastTransactionParams): Promise<any>;
@@ -144,17 +157,17 @@ export declare namespace CSP {
     streamAddressTransactions(params: StreamAddressUtxosParams): any;
     streamTransactions(params: StreamTransactionsParams): any;
     getAuthhead(params: StreamTransactionParams): Promise<AuthheadJSON | undefined>;
-    getDailyTransactions(params: { chain: string; network: string }): Promise<DailyTransactionsJSON>;
+    getDailyTransactions(params: CSP.DailyTransactionsParams): Promise<DailyTransactionsJSON>;
     getTransaction(params: StreamTransactionParams): Promise<any | undefined>;
     streamWalletAddresses(params: StreamWalletAddressesParams): any;
     walletCheck(params: WalletCheckParams): any;
     streamWalletTransactions(params: StreamWalletTransactionsParams): any;
     streamWalletUtxos(params: StreamWalletUtxosParams): any;
     streamMissingWalletAddresses(params: StreamWalletMissingAddressesParams);
-    getCoinsForTx(params: { chain: string; network: string; txid: string }): Promise<CoinListingJSON>;
+    getCoinsForTx(params: GetCoinsForTxParams): Promise<CoinListingJSON>;
     getLocalTip(params): Promise<IBlock | null>;
     getLocatorHashes(params): Promise<any>;
-    isValid(params: isValidParams): {isValid: boolean, type:string};
+    isValid(params: isValidParams): { isValid: boolean; type: string };
   }
 
   type ChainStateServices = { [key: string]: IChainStateService };
