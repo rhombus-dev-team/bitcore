@@ -219,7 +219,7 @@ export class CoinModel extends BaseModel<ICoin> {
       script: coin.script.toString('hex'),
       value: valueOrDefault(coin.value, -1),
       confirmations: valueOrDefault(coin.confirmations, -1),
-      sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined)
+      sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined),
       witnesses: valueOrDefault(coin.witnesses, []),
       type: valueOrDefault(coin.type, -1),
       scriptInfo,

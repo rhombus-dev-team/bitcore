@@ -85,20 +85,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
       EventStorage.signalBlock(convertedBlock);
     }
 
-    // Rework out reward
-    const inputs = await CoinStorage.collection.find({chain, network, spentTxid: block.transactions[0].hash})
-      .addCursorFlag('noCursorTimeout', true)
-      .toArray();
-    const firstInputValue = inputs.length > 0 ? inputs[0].value : 0;
-
-    await this.collection.updateOne(
-      { hash: convertedBlock.hash, chain, network }, 
-      { $set: { 
-        processed: true,
-        reward: convertedBlock.reward - firstInputValue
-      }}
-    );
-    this.updateCachedChainTip({ block: convertedBlock, chain, network });
+    await this.collection.updateOne({ hash: convertedBlock.hash, chain, network }, { $set: { processed: true } });
   }
 
   async getBlockOp(params: { block: Particl.Block; chain: string; network: string }) {
@@ -109,7 +96,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     const previousBlock = await this.collection.findOne({ hash: header.prevHash, chain, network });
 
     const blockTimeNormalized = (() => {
-      const prevTime = previousBlock ? previousBlock.timeNormalized : null;
+      const prevTime = previousBlock ? new Date(previousBlock.timeNormalized) : null;
       if (prevTime && blockTime <= prevTime.getTime()) {
         return prevTime.getTime() + 1;
       } else {
@@ -118,7 +105,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     })();
 
     const height = (previousBlock && previousBlock.height + 1) || 1;
-    logger.debug('Setting blockheight', height);
+    logger.debug('Setting blockheight: ' + height);
 
     const convertedBlock: IPartBlock = {
       chain,
@@ -168,9 +155,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
       const prevBlock = await this.collection.findOne({ chain, network, hash: header.prevHash });
       if (prevBlock) {
         localTip = prevBlock;
-        this.updateCachedChainTip({ chain, network, block: prevBlock });
       } else {
-        delete this.chainTips[chain][network];
         logger.error(`Previous block isn't in the DB need to roll back until we have a block in common`);
       }
       logger.info(`Resetting tip to ${localTip.height - 1}`, { chain, network });

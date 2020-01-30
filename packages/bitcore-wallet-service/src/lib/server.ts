@@ -4676,7 +4676,6 @@ export class WalletService {
     });
   }
 
-
   /**
    * Update the wallet cold staking setup
    * @param {Object} opts

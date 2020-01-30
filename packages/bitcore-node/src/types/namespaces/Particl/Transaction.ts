@@ -11,6 +11,7 @@ export type ParticlScript = {
 export type ParticlInputObj = {
   prevTxId: string;
   outputIndex: number;
+  sequenceNumber: number;
   data?: string;
   witnesses: string[];
 };

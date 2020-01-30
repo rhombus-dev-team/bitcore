@@ -135,7 +135,7 @@ export class Utils {
         toSatoshis: 1e2,
         maxDecimals: 6,
         minDecimals: 2,
-      }
+      },
       part: {
         toSatoshis: 100000000,
         maxDecimals: 6,

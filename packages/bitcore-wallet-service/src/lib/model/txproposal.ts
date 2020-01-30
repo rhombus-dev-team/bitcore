@@ -10,7 +10,6 @@ const log = require('npmlog');
 log.debug = log.verbose;
 log.disableColor();
 
-<<<<<<< HEAD
 const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
@@ -18,8 +17,6 @@ const Bitcore = {
   part: require('bitcore-lib-particl')
 };
 
-=======
->>>>>>> master
 const Common = require('../common');
 const Constants = Common.Constants,
   Defaults = Common.Defaults,
@@ -127,14 +124,10 @@ export class TxProposal {
   raw?: Array<string> | string;
   nonce?: number;
   gasPrice?: number;
-<<<<<<< HEAD
-  data?: string;
   xpubKeys?: string[];
-=======
   gasLimit?: number; // Backward compatibility for BWC <= 8.9.0
   data?: string; // Backward compatibility for BWC <= 8.9.0
   tokenAddress?: string;
->>>>>>> master
 
   static create(opts) {
     opts = opts || {};
@@ -287,98 +280,7 @@ export class TxProposal {
     $.checkState(
       Utils.checkValueInCollection(this.addressType, Constants.SCRIPT_TYPES)
     );
-<<<<<<< HEAD
-
-    if (!Constants.UTXO_COINS[this.coin.toUpperCase()]) {
-      const rawTx = Transactions.create({
-        ...this,
-        chain: this.coin.toUpperCase(),
-        recipients: [{ address: this.outputs[0].toAddress, amount: this.amount}],
-        fee: this.gasPrice
-      });
-      return {
-        uncheckedSerialize: () => rawTx,
-        txid: () => this.txid,
-        toObject: () => {
-          let ret = _.clone(this);
-          ret.outputs[0].satoshis = ret.outputs[0].amount;
-          return ret;
-        },
-        getFee: () => {
-          return this.fee;
-        },
-        getChangeOutput: () => null,
-
-      };
-    } else {
-      const t = new Bitcore[this.coin].Transaction();
-
-      switch (this.addressType) {
-        case Constants.SCRIPT_TYPES.P2SH:
-          _.each(this.inputs, (i) => {
-            $.checkState(i.publicKeys, 'Inputs should include public keys');
-            t.from(i, i.publicKeys, this.requiredSignatures);
-          });
-          break;
-        case Constants.SCRIPT_TYPES.P2PKH:
-          t.from(this.inputs);
-          break;
-      }
-
-      _.each(this.outputs, (o) => {
-        $.checkState(
-          o.script || o.toAddress,
-          'Output should have either toAddress or script specified'
-        );
-        if (o.script) {
-          t.addOutput(
-            new Bitcore[this.coin].Transaction.Output({
-              script: o.script,
-              satoshis: o.amount
-            })
-          );
-        } else {
-          t.to(o.toAddress, o.amount);
-        }
-      });
-
-      t.fee(this.fee);
-
-      if (this.changeAddress) {
-        t.change(this.changeAddress.address, this.coldStakingAddress);
-      }
-
-      // Shuffle outputs for improved privacy
-      // if (t.outputs.length > 1) {
-      //   const outputOrder = _.reject(this.outputOrder, (order: number) => {
-      //     return order >= t.outputs.length;
-      //   });
-      //   $.checkState(t.outputs.length == outputOrder.length);
-      //   t.sortOutputs((outputs) => {
-      //     return _.map(outputOrder, (i) => {
-      //       return outputs[i];
-      //     });
-      //   });
-      // }
-
-      // Validate actual inputs vs outputs independently of Bitcore
-      const totalInputs = _.sumBy(t.inputs, 'output.satoshis');
-      const totalOutputs = _.sumBy(t.outputs, 'satoshis');
-
-      $.checkState(
-        totalInputs > 0 && totalOutputs > 0 && totalInputs >= totalOutputs,
-        'not-enought-inputs'
-      );
-      $.checkState(
-        totalInputs - totalOutputs <= Defaults.MAX_TX_FEE[this.coin],
-        'fee-too-high'
-      );
-
-      return t;
-    }
-=======
     return ChainService.buildTx(this);
->>>>>>> master
   }
 
   _getCurrentSignatures() {
@@ -502,56 +404,6 @@ export class TxProposal {
     this._updateStatus();
   }
 
-<<<<<<< HEAD
-  _addSignaturesToBitcoreTxBitcoin(tx, signatures, xpub) {
-    const bitcore = Bitcore[this.coin];
-
-    if (signatures.length != this.inputs.length)
-      throw new Error('Number of signatures does not match number of inputs');
-
-    let i = 0;
-    const x = new bitcore.HDPublicKey(xpub);
-
-    _.each(signatures, (signatureHex) => {
-      try {
-        const signature = bitcore.crypto.Signature.fromString(signatureHex);
-        const pub = x.deriveChild(this.inputPaths[i]).publicKey;
-        const s = {
-          inputIndex: i,
-          signature,
-          sigtype:
-            // tslint:disable-next-line:no-bitwise
-            bitcore.crypto.Signature.SIGHASH_ALL |
-            bitcore.crypto.Signature.SIGHASH_FORKID,
-          publicKey: pub
-        };
-        tx.inputs[i].addSignature(tx, s);
-        i++;
-      } catch (e) { }
-    });
-    if (i != tx.inputs.length) throw new Error('Wrong signatures');
-  }
-
-  _addSignaturesToBitcoreTx(tx, signatures, xpub) {
-    switch (this.coin) {
-      case 'eth':
-        const raw = Transactions.applySignature({
-          chain: 'ETH',
-          tx: tx.uncheckedSerialize(),
-          signature: signatures[0],
-        });
-        tx.uncheckedSerialize = () => raw ;
-
-        // bitcore users id for txid...
-        tx.id = Transactions.getHash({ tx: raw, chain: this.coin.toUpperCase() });
-        break;
-      default:
-        return this._addSignaturesToBitcoreTxBitcoin(tx, signatures, xpub);
-    }
-  }
-
-=======
->>>>>>> master
   sign(copayerId, signatures, xpub) {
     try {
       // Tests signatures are OK

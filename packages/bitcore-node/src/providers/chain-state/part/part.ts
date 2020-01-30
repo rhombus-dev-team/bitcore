@@ -88,11 +88,7 @@ export class PARTStateProvider extends InternalStateProvider{
   }
 
   async getLocalTip({ chain, network }) {
-    if (ParticlBlockStorage.chainTips[chain] && ParticlBlockStorage.chainTips[chain][network]) {
-      return ParticlBlockStorage.chainTips[chain][network];
-    } else {
-      return ParticlBlockStorage.getLocalTip({ chain, network });
-    }
+    return ParticlBlockStorage.getLocalTip({ chain, network });
   }
 
   async getLocatorHashes(params) {

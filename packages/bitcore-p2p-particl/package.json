@@ -1,6 +1,6 @@
 {
   "name": "bitcore-p2p-particl",
-  "version": "8.8.4",
+  "version": "8.13.0",
   "description": "Interface to the particl P2P network for bitcore",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "url": "https://github.com/particl/bitcore.git"
   },
   "dependencies": {
-    "bitcore-lib-particl": "^8.8.4",
+    "bitcore-lib-particl": "^8.13.0",
     "bloom-filter": "^0.2.0",
     "buffers": "bitpay/node-buffers#v0.1.2-bitpay",
     "socks5-client": "^0.3.6"

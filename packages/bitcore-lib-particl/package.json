@@ -1,6 +1,6 @@
 {
   "name": "bitcore-lib-particl",
-  "version": "8.8.4",
+  "version": "8.13.0",
   "description": "A pure and powerful JavaScript Particl library.",
   "author": "Particl <hello@particl.io>",
   "main": "index.js",
