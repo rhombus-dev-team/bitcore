@@ -1,6 +1,6 @@
 {
   "name": "bitcore-p2p-particl",
-  "version": "8.13.0",
+  "version": "8.16.2",
   "description": "Interface to the particl P2P network for bitcore",
   "main": "index.js",
   "scripts": {
