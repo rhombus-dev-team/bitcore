@@ -8,6 +8,7 @@ module.exports = {
     bch: 10000 * 1000, // 10k sat/b
     eth: 50000000000, // 50 Gwei,
     part: 10000 * 1000, // 10k sat/b
+    xrp: 50000000000
   },
 
   MIN_TX_FEE: {
@@ -15,6 +16,7 @@ module.exports = {
     bch: 0,
     eth: 0,
     part: 0,
+    xrp: 0
   },
 
   MAX_TX_FEE: {
@@ -22,6 +24,7 @@ module.exports = {
     bch: 0.05 * 1e8,
     eth: 1 * 1e18,  // 1 eth
     part: 0.05 * 1e8,
+    xrp: 1 * 1e6 // 1 xrp
   },
 
   MAX_TX_SIZE_IN_KB: {
@@ -29,11 +32,15 @@ module.exports = {
     bch: 100,
     eth: 500,
     part: 100,
+    xrp: 1000
   },
 
   // ETH
   DEFAULT_GAS_LIMIT: 200000,
   MIN_GAS_LIMIT: 21000,
+
+  // XRP has a non-refundable mininum activation fee / balance
+  MIN_XRP_BALANCE: 20000000,
 
   MAX_KEYS: 100,
 
@@ -90,31 +97,35 @@ module.exports = {
     eth: [
       {
         name: 'urgent',
-        nbBlocks: 10, // < 2 min
-        multiplier: 1.1,
-        defaultValue: 30000000000
+        nbBlocks: 1,
+        defaultValue: 10000000000
       },
       {
         name: 'priority',
-        nbBlocks: 15, // 3 min
-        defaultValue: 25000000000
+        nbBlocks: 2,
+        defaultValue: 5000000000
       },
       {
         name: 'normal',
-        nbBlocks: 25, // 5 min
-        defaultValue: 20000000000
+        nbBlocks: 3,
+        defaultValue: 1000000000
       },
       {
         name: 'economy',
-        nbBlocks: 50, // 10 minutes
-        multiplier: 0.9,
-        defaultValue: 15000000000
+        nbBlocks: 4,
+        defaultValue: 1000000000
       },
       {
         name: 'superEconomy',
-        nbBlocks: 75, // 15 minutes
-        multiplier: 0.8,
-        defaultValue: 10000000000
+        nbBlocks: 4,
+        defaultValue: 1000000000
+      }
+    ],
+    xrp: [
+      {
+        name: 'normal',
+        nbBlocks: 1, // 3 seconds
+        defaultValue: 12
       }
     ],
     part: [
@@ -193,6 +204,9 @@ module.exports = {
   // Cache time fee levels (in ms)
   FEE_LEVEL_CACHE_DURATION: 6 * 60 * 1000,
 
+  // Cache time for latest copay version (in ms)
+  COPAY_VERSION_CACHE_DURATION: 6 * 60 * 1000,
+
   // Max allowed timespan for notification queries in seconds
   MAX_NOTIFICATIONS_TIMESPAN: 60 * 60 * 24 * 14, // ~ 2 weeks
   NOTIFICATIONS_TIMESPAN: 60,
@@ -205,8 +219,7 @@ module.exports = {
       delayAfter: 8, // begin slowing down responses after the 3rd request
       delayMs: 3000, // slow down subsequent responses by 3 seconds per request
       max: 15, // start blocking after 20 request
-      message:
-        'Too many wallets created from this IP, please try again after an hour'
+      message: 'Too many wallets created from this IP, please try again after an hour'
     },
     estimateFee: {
       windowMs: 60 * 10 * 1000, // 10 min window
@@ -237,5 +250,5 @@ module.exports = {
 
   NEW_BLOCK_THROTTLE_TIME_MIN: 5,
 
-  BROADCAST_RETRY_TIME: 350, // ms
+  BROADCAST_RETRY_TIME: 350 // ms
 };

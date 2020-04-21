@@ -30,6 +30,14 @@ export class EthChain implements IChain {
     return convertedBalance;
   }
 
+  notifyConfirmations() {
+    return false;
+  }
+
+  supportsMultisig() {
+    return false;
+  }
+
   getWalletBalance(server, wallet, opts, cb) {
     const bc = server._getBlockchainExplorer(wallet.coin, wallet.network);
 
@@ -45,23 +53,20 @@ export class EthChain implements IChain {
         if (err) return cb(err);
         const lockedSum = _.sumBy(txps, 'amount') || 0;
         const convertedBalance = this.convertBitcoreBalance(balance, lockedSum);
-        server.storage.fetchAddresses(
-          server.walletId,
-          (err, addresses: IAddress[]) => {
-            if (err) return cb(err);
-            if (addresses.length > 0) {
-              const byAddress = [
-                {
-                  address: addresses[0].address,
-                  path: Constants.PATHS.SINGLE_ADDRESS,
-                  amount: convertedBalance.totalAmount
-                }
-              ];
-              convertedBalance.byAddress = byAddress;
-            }
-            return cb(null, convertedBalance);
+        server.storage.fetchAddresses(server.walletId, (err, addresses: IAddress[]) => {
+          if (err) return cb(err);
+          if (addresses.length > 0) {
+            const byAddress = [
+              {
+                address: addresses[0].address,
+                path: addresses[0].path,
+                amount: convertedBalance.totalAmount
+              }
+            ];
+            convertedBalance.byAddress = byAddress;
           }
-        );
+          return cb(null, convertedBalance);
+        });
       });
     });
   }
@@ -94,9 +99,9 @@ export class EthChain implements IChain {
     });
   }
 
-  getChangeAddress() { }
+  getChangeAddress() {}
 
-  checkDust(output, opts) { }
+  checkDust(output, opts) {}
 
   getFee(server, wallet, opts) {
     return new Promise(resolve => {
@@ -124,9 +129,7 @@ export class EthChain implements IChain {
         }
         if (_.isNumber(opts.fee)) {
           // This is used for sendmax
-          gasPrice = feePerKb = Number(
-            (opts.fee / (inGasLimit || Defaults.DEFAULT_GAS_LIMIT)).toFixed()
-          );
+          gasPrice = feePerKb = Number((opts.fee / (inGasLimit || Defaults.DEFAULT_GAS_LIMIT)).toFixed());
         }
 
         const gasLimit = inGasLimit || Defaults.DEFAULT_GAS_LIMIT;
@@ -196,51 +199,45 @@ export class EthChain implements IChain {
   }
 
   selectTxInputs(server, txp, wallet, opts, cb, next) {
-    server.getBalance(
-      { wallet, tokenAddress: opts.tokenAddress },
-      (err, balance) => {
-        if (err) return next(err);
+    server.getBalance({ wallet, tokenAddress: opts.tokenAddress }, (err, balance) => {
+      if (err) return next(err);
 
-        const { totalAmount, availableAmount } = balance;
-        if (totalAmount < txp.getTotalAmount()) {
-          return cb(Errors.INSUFFICIENT_FUNDS);
-        } else if (availableAmount < txp.getTotalAmount()) {
-          return cb(Errors.LOCKED_FUNDS);
+      const { totalAmount, availableAmount } = balance;
+      if (totalAmount < txp.getTotalAmount()) {
+        return cb(Errors.INSUFFICIENT_FUNDS);
+      } else if (availableAmount < txp.getTotalAmount()) {
+        return cb(Errors.LOCKED_FUNDS);
+      } else {
+        if (opts.tokenAddress) {
+          // ETH wallet balance
+          server.getBalance({}, (err, ethBalance) => {
+            if (err) return next(err);
+            const { totalAmount, availableAmount } = ethBalance;
+            if (totalAmount < txp.fee) {
+              return cb(Errors.INSUFFICIENT_ETH_FEE);
+            } else if (availableAmount < txp.fee) {
+              return cb(Errors.LOCKED_ETH_FEE);
+            } else {
+              return next(server._checkTx(txp));
+            }
+          });
         } else {
-          if (opts.tokenAddress) {
-            // ETH wallet balance
-            server.getBalance({}, (err, ethBalance) => {
-              if (err) return next(err);
-              const { totalAmount, availableAmount } = ethBalance;
-              if (totalAmount < txp.fee) {
-                return cb(Errors.INSUFFICIENT_ETH_FEE);
-              } else if (availableAmount < txp.fee) {
-                return cb(Errors.LOCKED_ETH_FEE);
-              } else {
-                return next(server._checkTx(txp));
-              }
-            });
-          } else {
-            return next(server._checkTx(txp));
-          }
+          return next(server._checkTx(txp));
         }
+      }
     });
   }
 
-  checkUtxos(opts) { }
+  checkUtxos(opts) {}
 
   checkValidTxAmount(output): boolean {
-    if (
-      !_.isNumber(output.amount) ||
-      _.isNaN(output.amount) ||
-      output.amount < 0
-    ) {
+    if (!_.isNumber(output.amount) || _.isNaN(output.amount) || output.amount < 0) {
       return false;
     }
     return true;
   }
 
-  setInputs() { }
+  setInputs() {}
 
   isUTXOCoin() {
     return false;
@@ -286,16 +283,14 @@ export class EthChain implements IChain {
 
   validateAddress(wallet, inaddr, opts) {
     const chain = 'ETH';
-    try {
-      Validation.validateAddress(
-        chain,
-        wallet.network,  // not really used for ETH. wallet.network is 'livenet/testnet/regtest' in wallet.
-        inaddr,
-      );
-    } catch (ex) {
-      return Errors.INVALID_ADDRESS;
+    const isValidTo = Validation.validateAddress(chain, wallet.network, inaddr);
+    if (!isValidTo) {
+      throw Errors.INVALID_ADDRESS;
     }
-
+    const isValidFrom = Validation.validateAddress(chain, wallet.network, opts.from);
+    if (!isValidFrom) {
+      throw Errors.INVALID_ADDRESS;
+    }
     return;
   }
 }

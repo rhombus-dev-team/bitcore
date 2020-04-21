@@ -1,43 +1,43 @@
-import * as _ from 'lodash';
 import { ObjectID } from 'bson';
-import logger from '../../../logger';
+import * as _ from 'lodash';
 import { LoggifyClass } from '../../../decorators/Loggify';
-import { IEthTransaction, EthTransactionJSON } from '../types';
-import { StorageService, Storage } from '../../../services/storage';
-import { partition } from '../../../utils/partition';
-import { TransformOptions } from '../../../types/TransformOptions';
+import logger from '../../../logger';
 import { MongoBound } from '../../../models/base';
-import { WalletAddressStorage } from '../../../models/walletAddress';
-import { SpentHeightIndicators } from '../../../types/Coin';
-import { EventStorage } from '../../../models/events';
-import { Config } from '../../../services/config';
-import { StreamingFindOptions } from '../../../types/Query';
-import { ERC721Abi } from '../abi/erc721';
-import { ERC20Abi } from '../abi/erc20';
 import { BaseTransaction } from '../../../models/baseTransaction';
+import { EventStorage } from '../../../models/events';
+import { WalletAddressStorage } from '../../../models/walletAddress';
+import { Config } from '../../../services/config';
+import { Storage, StorageService } from '../../../services/storage';
+import { SpentHeightIndicators } from '../../../types/Coin';
+import { StreamingFindOptions } from '../../../types/Query';
+import { TransformOptions } from '../../../types/TransformOptions';
 import { valueOrDefault } from '../../../utils/check';
+import { partition } from '../../../utils/partition';
+import { ERC20Abi } from '../abi/erc20';
+import { ERC721Abi } from '../abi/erc721';
 import { InvoiceAbi } from '../abi/invoice';
+import { EthTransactionJSON, IEthTransaction } from '../types';
 
 function requireUncached(module) {
   delete require.cache[require.resolve(module)];
   return require(module);
 }
 
+const Erc20Decoder = requireUncached('abi-decoder');
+Erc20Decoder.addABI(ERC20Abi);
 function getErc20Decoder() {
-  const Erc20Decoder = requireUncached('abi-decoder');
-  Erc20Decoder.addABI(ERC20Abi);
   return Erc20Decoder;
 }
 
+const Erc721Decoder = requireUncached('abi-decoder');
+Erc721Decoder.addABI(ERC721Abi);
 function getErc721Decoder() {
-  const Erc721Decoder = requireUncached('abi-decoder');
-  Erc721Decoder.addABI(ERC721Abi);
   return Erc721Decoder;
 }
 
+const InvoiceDecoder = requireUncached('abi-decoder');
+InvoiceDecoder.addABI(InvoiceAbi);
 function getInvoiceDecoder() {
-  const InvoiceDecoder = requireUncached('abi-decoder');
-  InvoiceDecoder.addABI(InvoiceAbi);
   return InvoiceDecoder;
 }
 
@@ -79,7 +79,10 @@ export class EthTransactionModel extends BaseTransaction<IEthTransaction> {
     logger.debug('Writing Transactions', txOps.length);
     operations.push(
       ...partition(txOps, txOps.length / Config.get().maxPoolSize).map(txBatch =>
-        this.collection.bulkWrite(txBatch.map(op => this.toMempoolSafeUpsert(op, params.height)), { ordered: false })
+        this.collection.bulkWrite(
+          txBatch.map(op => this.toMempoolSafeUpsert(op, params.height)),
+          { ordered: false }
+        )
       )
     );
     await Promise.all(operations);
@@ -137,7 +140,10 @@ export class EthTransactionModel extends BaseTransaction<IEthTransaction> {
           const { to, txid, from } = tx;
           const sentWallets = await WalletAddressStorage.collection.find({ chain, network, address: from }).toArray();
           const receivedWallets = await WalletAddressStorage.collection.find({ chain, network, address: to }).toArray();
-          const wallets = _.uniqBy(sentWallets.concat(receivedWallets).map(w => w.wallet), w => w.toHexString());
+          const wallets = _.uniqBy(
+            sentWallets.concat(receivedWallets).map(w => w.wallet),
+            w => w.toHexString()
+          );
 
           return {
             updateOne: {
@@ -196,27 +202,33 @@ export class EthTransactionModel extends BaseTransaction<IEthTransaction> {
   }
 
   abiDecode(input: string) {
-    const erc20Data = getErc20Decoder().decodeMethod(input);
-    if (erc20Data) {
-      return {
-        type: 'ERC20',
-        ...erc20Data
-      };
-    }
-    const erc721Data = getErc721Decoder().decodeMethod(input);
-    if (erc721Data) {
-      return {
-        type: 'ERC721',
-        ...erc721Data
-      };
-    }
-    const invoiceData = getInvoiceDecoder().decodeMethod(input);
-    if (invoiceData) {
-      return {
-        type: 'INVOICE',
-        ...invoiceData
-      };
-    }
+    try {
+      const erc20Data = getErc20Decoder().decodeMethod(input);
+      if (erc20Data) {
+        return {
+          type: 'ERC20',
+          ...erc20Data
+        };
+      }
+    } catch (e) {}
+    try {
+      const erc721Data = getErc721Decoder().decodeMethod(input);
+      if (erc721Data) {
+        return {
+          type: 'ERC721',
+          ...erc721Data
+        };
+      }
+    } catch (e) {}
+    try {
+      const invoiceData = getInvoiceDecoder().decodeMethod(input);
+      if (invoiceData) {
+        return {
+          type: 'INVOICE',
+          ...invoiceData
+        };
+      }
+    } catch (e) {}
     return undefined;
   }
 

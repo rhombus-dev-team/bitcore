@@ -1,4 +1,4 @@
-export type TransactionJSON = {
+export interface TransactionJSON {
   _id: string;
   txid: string;
   chain: string;
@@ -15,4 +15,4 @@ export type TransactionJSON = {
   inputCount: number;
   outputCount: number;
   value: number;
-};
+}

@@ -3,12 +3,13 @@
 module.exports = {
   COINS: {
     BTC: 'btc',
-    // BCH: 'bch',
-    // ETH: 'eth',
-    // USDC: 'usdc',
-    // PAX: 'pax',
-    // GUSD: 'gusd'
-    PART: 'part'
+    PART: 'part',
+    BCH: 'bch',
+    ETH: 'eth',
+    XRP: 'xrp',
+    USDC: 'usdc',
+    PAX: 'pax',
+    GUSD: 'gusd'
   },
 
   ERC20: {
@@ -32,7 +33,9 @@ module.exports = {
 
   SCRIPT_TYPES: {
     P2SH: 'P2SH',
-    P2PKH: 'P2PKH'
+    P2WSH: 'P2WSH',
+    P2PKH: 'P2PKH',
+    P2WPKH: 'P2WPKH'
   },
   DERIVATION_STRATEGIES: {
     BIP44: 'BIP44',
@@ -66,6 +69,6 @@ module.exports = {
       symbol: 'GUSD',
       decimal: 2,
       address: '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd'
-    },
-  },
+    }
+  }
 };

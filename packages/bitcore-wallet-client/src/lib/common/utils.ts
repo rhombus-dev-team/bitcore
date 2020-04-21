@@ -22,6 +22,7 @@ var Bitcore_ = {
   bch: BitcoreLibCash,
   eth: Bitcore,
   part: BitcoreLibParticl,
+  xrp: Bitcore
 };
 var PrivateKey = Bitcore.PrivateKey;
 var PublicKey = Bitcore.PublicKey;
@@ -100,21 +101,21 @@ export class Utils {
     return ret;
   }
 
-  static signMessage(message, privKey, coin) {
+  static signMessage(message, privKey) {
     $.checkArgument(message);
-    var priv = new Bitcore_[coin || 'btc'].PrivateKey(privKey);
+    var priv = new Bitcore.PrivateKey(privKey);
     const flattenedMessage = _.isArray(message) ? _.join(message) : message;
     var hash = this.hashMessage(flattenedMessage);
     return crypto.ECDSA.sign(hash, priv, 'little').toString();
   }
 
-  static verifyMessage(message: Array<string> | string, signature, pubKey, coin) {
+  static verifyMessage(message: Array<string> | string, signature, pubKey) {
     $.checkArgument(message);
     $.checkArgument(pubKey);
 
     if (!signature) return false;
 
-    var pub = new Bitcore_[coin || 'btc'].PublicKey(pubKey);
+    var pub = new Bitcore.PublicKey(pubKey);
     const flattenedMessage = _.isArray(message) ? _.join(message) : message;
     const hash = this.hashMessage(flattenedMessage);
     try {
@@ -127,10 +128,7 @@ export class Utils {
 
   static privateKeyToAESKey(privKey) {
     $.checkArgument(privKey && _.isString(privKey));
-    $.checkArgument(
-      Bitcore.PrivateKey.isValid(privKey),
-      'The private key received is invalid'
-    );
+    $.checkArgument(Bitcore.PrivateKey.isValid(privKey), 'The private key received is invalid');
     var pk = Bitcore.PrivateKey.fromString(privKey);
     return Bitcore.crypto.Hash.sha256(pk.toBuffer())
       .slice(0, 16)
@@ -174,8 +172,15 @@ export class Utils {
 
     var bitcoreAddress;
     switch (scriptType) {
+      case Constants.SCRIPT_TYPES.P2WSH:
+        const nestedWitness = false;
+        bitcoreAddress = bitcore.Address.createMultisig(publicKeys, m, network, nestedWitness, 'witnessscripthash');
+        break;
       case Constants.SCRIPT_TYPES.P2SH:
         bitcoreAddress = bitcore.Address.createMultisig(publicKeys, m, network, null, sha256);
+        break;
+      case Constants.SCRIPT_TYPES.P2WPKH:
+        bitcoreAddress = Bitcore.Address.fromPublicKey(publicKeys[0], network, 'witnesspubkeyhash');
         break;
       case Constants.SCRIPT_TYPES.P2PKH:
         $.checkState(_.isArray(publicKeys) && publicKeys.length == 1);
@@ -188,13 +193,7 @@ export class Utils {
         } else {
           const { addressIndex, isChange } = this.parseDerivationPath(path);
           const [{ xPubKey }] = publicKeyRing;
-          bitcoreAddress = Deriver.deriveAddress(
-            chain.toUpperCase(),
-            network,
-            xPubKey,
-            addressIndex,
-            isChange
-          );
+          bitcoreAddress = Deriver.deriveAddress(chain.toUpperCase(), network, xPubKey, addressIndex, isChange);
         }
         break;
     }
@@ -223,18 +222,14 @@ export class Utils {
     return sjcl.codec.hex.fromBits(hash);
   }
 
-  static signRequestPubKey(requestPubKey, xPrivKey, coin) {
-    var priv = new Bitcore_[coin].HDPrivateKey(xPrivKey).deriveChild(
-      Constants.PATHS.REQUEST_KEY_AUTH
-    ).privateKey;
-    return this.signMessage(requestPubKey, priv, coin);
+  static signRequestPubKey(requestPubKey, xPrivKey) {
+    var priv = new Bitcore.HDPrivateKey(xPrivKey).deriveChild(Constants.PATHS.REQUEST_KEY_AUTH).privateKey;
+    return this.signMessage(requestPubKey, priv);
   }
 
-  static verifyRequestPubKey(requestPubKey, signature, xPubKey, coin) {
-    var pub = new Bitcore_[coin].HDPublicKey(xPubKey).deriveChild(
-      Constants.PATHS.REQUEST_KEY_AUTH
-    ).publicKey;
-    return this.verifyMessage(requestPubKey, signature, pub.toString(), coin);
+  static verifyRequestPubKey(requestPubKey, signature, xPubKey) {
+    var pub = new Bitcore.HDPublicKey(xPubKey).deriveChild(Constants.PATHS.REQUEST_KEY_AUTH).publicKey;
+    return this.verifyMessage(requestPubKey, signature, pub.toString());
   }
 
   static formatAmount(satoshis, unit, opts?) {
@@ -266,10 +261,7 @@ export class Utils {
 
     var u = Constants.UNITS[unit];
     var precision = opts.fullPrecision ? 'full' : 'short';
-    var amount = clipDecimals(
-      satoshis / u.toSatoshis,
-      u[precision].maxDecimals
-    ).toFixed(u[precision].maxDecimals);
+    var amount = clipDecimals(satoshis / u.toSatoshis, u[precision].maxDecimals).toFixed(u[precision].maxDecimals);
     return addSeparators(
       amount,
       opts.thousandsSeparator || ',',
@@ -286,16 +278,16 @@ export class Utils {
 
       var t = new bitcore.Transaction();
 
-      $.checkState(
-        _.includes(_.values(Constants.SCRIPT_TYPES), txp.addressType)
-      );
+      $.checkState(_.includes(_.values(Constants.SCRIPT_TYPES), txp.addressType));
 
       switch (txp.addressType) {
+        case Constants.SCRIPT_TYPES.P2WSH:
         case Constants.SCRIPT_TYPES.P2SH:
           _.each(txp.inputs, i => {
             t.from(i, i.publicKeys, txp.requiredSignatures);
           });
           break;
+        case Constants.SCRIPT_TYPES.P2WPKH:
         case Constants.SCRIPT_TYPES.P2PKH:
           t.from(txp.inputs);
           break;
@@ -305,10 +297,7 @@ export class Utils {
         t.to(txp.toAddress, txp.amount);
       } else if (txp.outputs) {
         _.each(txp.outputs, o => {
-          $.checkState(
-            o.script || o.toAddress,
-            'Output should have either toAddress or script specified'
-          );
+          $.checkState(o.script || o.toAddress, 'Output should have either toAddress or script specified');
           if (o.script) {
             t.addOutput(
               new bitcore.Transaction.Output({
@@ -359,7 +348,7 @@ export class Utils {
 
       return t;
     } else {
-      const { data, outputs, payProUrl, tokenAddress } = txp;
+      const { data, destinationTag, outputs, payProUrl, tokenAddress } = txp;
       const recipients = outputs.map(output => {
         return {
           amount: output.amount,
@@ -379,6 +368,7 @@ export class Utils {
         const rawTx = Transactions.create({
           ...txp,
           ...recipients[index],
+          tag: destinationTag ? Number(destinationTag) : undefined,
           chain,
           nonce: Number(txp.nonce) + Number(index),
           recipients: [recipients[index]]

@@ -214,7 +214,7 @@ Address._classifyFromVersion = function(buffer) {
   } else {
     var pubkeyhashNetwork = Networks.get(buffer[0], 'pubkeyhash');
     var scripthashNetwork = Networks.get(buffer[0], 'scripthash');
-    
+
     if (pubkeyhashNetwork) {
       version.network = pubkeyhashNetwork;
       version.type = Address.PayToPublicKeyHash;
@@ -325,16 +325,27 @@ Address._transformScript = function(script, network) {
  * @param {number} threshold - the number of signatures needed to release the funds
  * @param {String|Network} network - either a Network instance, 'livenet', or 'testnet'
  * @param {boolean=} nestedWitness - if the address uses a nested p2sh witness
- * @param {boolean} sha256 - if the address should use a sha256 hash
+ * @param {string} type - Either 'scripthash' or 'witnessscripthash'. If nestedWitness is set, then this is ignored
  * @return {Address}
  */
-Address.createMultisig = function(publicKeys, threshold, network, nestedWitness, sha256) {
+Address.createMultisig = function(publicKeys, threshold, network, nestedWitness, type) {
   network = network || publicKeys[0].network || Networks.defaultNetwork;
+  if (type && type !== Address.PayToScriptHash && type !== Address.PayToWitnessScriptHash) {
+    throw new TypeError('Type must be either scripthash or witnessscripthash to create multisig.');
+  }
+  if (nestedWitness || type === Address.PayToWitnessScriptHash) {
+    publicKeys = _.map(publicKeys, PublicKey);
+    for (var i = 0; i < publicKeys.length; i++) {
+      if (!publicKeys[i].compressed) {
+        throw new TypeError('Witness addresses must use compressed public keys.');
+      }
+    }
+  }
   var redeemScript = Script.buildMultisigOut(publicKeys, threshold);
   if (nestedWitness) {
-    return Address.payingTo(Script.buildWitnessMultisigOutFromScript(redeemScript), network, sha256);
+    return Address.payingTo(Script.buildWitnessMultisigOutFromScript(redeemScript), network);
   }
-  return Address.payingTo(redeemScript, network, sha256);
+  return Address.payingTo(redeemScript, network, type);
 };
 
 /**
@@ -426,10 +437,17 @@ Address.fromScriptHash = function(hash, network, sha256) {
  * @param {boolean} sha256 - if the address should use a sha256 hash
  * @returns {Address} A new valid and frozen instance of an Address
  */
-Address.payingTo = function(script, network, sha256) {
+Address.payingTo = function(script, network, type) {
   $.checkArgument(script, 'script is required');
   $.checkArgument(script instanceof Script, 'script must be instance of Script');
-  return Address.fromScriptHash(Hash[sha256 ? 'sha256' : 'sha256ripemd160'](script.toBuffer()), network, sha256);
+  var hash;
+  if (type === Address.PayToWitnessScriptHash) {
+    hash = Hash.sha256(script.toBuffer());
+  } else {
+    hash = Hash.sha256ripemd160(script.toBuffer());
+  }
+  var type = type || Address.PayToScriptHash;
+  return Address.fromScriptHash(hash, network, type);
 };
 
 /**
