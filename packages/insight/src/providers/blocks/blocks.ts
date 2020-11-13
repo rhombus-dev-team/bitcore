@@ -27,7 +27,7 @@ export interface ApiUtxoCoinBlock extends ApiBlock {
   version: number;
 }
 
-export interface ApiParticlBlock extends ApiBlock {
+export interface ApiRhombusBlock extends ApiBlock {
   difficulty: number;
   merkleRoot: string;
   witnessMerkleRoot: string;
@@ -69,7 +69,7 @@ export interface AppUtxoCoinBlock extends AppBlock {
   version: number;
 }
 
-export interface AppParticlBlock extends AppBlock {
+export interface AppRhombusBlock extends AppBlock {
   difficulty: number;
   merkleroot: string;
   witnessmerkleroot: string;
@@ -106,7 +106,7 @@ export class BlocksProvider {
     };
   }
 
-  public toParticlAppBlock(block: ApiParticlBlock): AppParticlBlock {
+  public toRhombusAppBlock(block: ApiRhombusBlock): AppRhombusBlock {
     return {
       ...this.toAppBlock(block),
       merkleroot: block.merkleRoot,
@@ -153,7 +153,7 @@ export class BlocksProvider {
 
   public getCurrentHeight(
     chainNetwork: ChainNetwork
-  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock> {
+  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiRhombusBlock> {
     if (!this.tipValue || !this.currentChainNetwork || this.currentChainNetwork !== chainNetwork) {
       this.tipValue = this.requestCurrentHeight(chainNetwork).pipe(
         merge(),
@@ -166,18 +166,18 @@ export class BlocksProvider {
 
   public requestCurrentHeight(
     chainNetwork: ChainNetwork
-  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock> {
+  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiRhombusBlock> {
 
     const heightUrl = `${this.api.getUrl(chainNetwork)}/block/tip`;
-    return this.httpClient.get<ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock>(heightUrl);
+    return this.httpClient.get<ApiEthBlock & ApiUtxoCoinBlock & ApiRhombusBlock>(heightUrl);
   }
 
   public getBlocks(
     chainNetwork: ChainNetwork,
     numBlocks: number = 10
-  ): Observable<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]> {
+  ): Observable<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiRhombusBlock[]> {
     const url = `${this.api.getUrl(chainNetwork)}/block?limit=${numBlocks}`;
-    return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]>(url);
+    return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiRhombusBlock[]>(url);
   }
 
   public getCoinsForBlockHash(
@@ -199,18 +199,18 @@ export class BlocksProvider {
     since: number,
     numBlocks: number = 10,
     chainNetwork: ChainNetwork
-  ): Observable<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]> {
+  ): Observable<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiRhombusBlock[]> {
     const url = `${this.api.getUrl(
       chainNetwork
     )}/block?since=${since}&limit=${numBlocks}&paging=height&direction=-1`;
-    return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiParticlBlock[]>(url);
+    return this.httpClient.get<ApiEthBlock[] & ApiUtxoCoinBlock[] & ApiRhombusBlock[]>(url);
   }
 
   public getBlock(
     hash: string,
     chainNetwork: ChainNetwork
-  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock> {
+  ): Observable<ApiEthBlock & ApiUtxoCoinBlock & ApiRhombusBlock> {
     const url = `${this.api.getUrl(chainNetwork)}/block/${hash}`;
-    return this.httpClient.get<ApiEthBlock & ApiUtxoCoinBlock & ApiParticlBlock>(url);
+    return this.httpClient.get<ApiEthBlock & ApiUtxoCoinBlock & ApiRhombusBlock>(url);
   }
 }

@@ -11,7 +11,7 @@ var Bitcore_ = {
   btc: CWC.BitcoreLib,
   bch: CWC.BitcoreLibCash,
   eth: CWC.BitcoreLib,
-  part: CWC.BitcoreLibParticl
+  rhom: CWC.BitcoreLibRhombus
 };
 const sjcl = require('sjcl');
 
@@ -210,7 +210,7 @@ export class Credentials {
       throw new Error('External Wallets are no longer supported');
     }
 
-    x.coin = x.coin || 'part';
+    x.coin = x.coin || 'rhom';
     x.addressType = x.addressType || Constants.SCRIPT_TYPES.P2SH;
     x.account = x.account || 0;
 

@@ -1,7 +1,7 @@
 import { InternalStateProvider } from "../internal/internal";
 import { CSP } from "../../../types/namespaces/ChainStateProvider";
 import { IBlock } from "../../../models/baseBlock";
-import { ParticlBlockStorage, IPartBlock } from "../../../modules/particl/models/block";
+import { RhombusBlockStorage, IRhomBlock } from "../../../modules/rhombus/models/block";
 import { Storage } from "../../../services/storage";
 
 export class PARTStateProvider extends InternalStateProvider{
@@ -12,24 +12,24 @@ export class PARTStateProvider extends InternalStateProvider{
   streamBlocks(params: CSP.StreamBlocksParams) {
     const { req, res } = params;
     const { query, options } = this.getBlocksQuery(params);
-    Storage.apiStreamingFind(ParticlBlockStorage, query, options, req, res);
+    Storage.apiStreamingFind(RhombusBlockStorage, query, options, req, res);
   }
 
   async getBlocks(params: CSP.GetBlockParams): Promise<Array<IBlock>> {
     const { query, options } = this.getBlocksQuery(params);
-    let cursor = ParticlBlockStorage.collection.find(query, options).addCursorFlag('noCursorTimeout', true);
+    let cursor = RhombusBlockStorage.collection.find(query, options).addCursorFlag('noCursorTimeout', true);
     if (options.sort) {
       cursor = cursor.sort(options.sort);
     }
     let blocks = await cursor.toArray();
     const tip = await this.getLocalTip(params);
     const tipHeight = tip ? tip.height : 0;
-    const blockTransform = (b: IPartBlock) => {
+    const blockTransform = (b: IRhomBlock) => {
       let confirmations = 0;
       if (b.height && b.height >= 0) {
         confirmations = tipHeight - b.height + 1;
       }
-      const convertedBlock = ParticlBlockStorage._apiTransform(b, { object: true }) as IPartBlock;
+      const convertedBlock = RhombusBlockStorage._apiTransform(b, { object: true }) as IRhomBlock;
       return { ...convertedBlock, confirmations };
     };
     return blocks.map(blockTransform);
@@ -38,7 +38,7 @@ export class PARTStateProvider extends InternalStateProvider{
   async getDailyTransactions({ chain, network }: { chain: string; network: string }) {
     const beforeBitcoin = new Date('2009-01-09T00:00:00.000Z');
     const todayTruncatedUTC = new Date(new Date().toISOString().split('T')[0]);
-    const results = await ParticlBlockStorage.collection
+    const results = await RhombusBlockStorage.collection
       .aggregate<{
         date: string;
         transactionCount: number;
@@ -88,7 +88,7 @@ export class PARTStateProvider extends InternalStateProvider{
   }
 
   async getLocalTip({ chain, network }) {
-    return ParticlBlockStorage.getLocalTip({ chain, network });
+    return RhombusBlockStorage.getLocalTip({ chain, network });
   }
 
   async getLocatorHashes(params) {
@@ -106,7 +106,7 @@ export class PARTStateProvider extends InternalStateProvider{
             chain,
             network
           };
-    const locatorBlocks = await ParticlBlockStorage.collection
+    const locatorBlocks = await RhombusBlockStorage.collection
       .find(query, { sort: { height: -1 }, limit: 30 })
       .addCursorFlag('noCursorTimeout', true)
       .toArray();

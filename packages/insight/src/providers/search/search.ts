@@ -58,7 +58,7 @@ export class SearchProvider {
   }
   private extractAddress(address: string): string {
     const extractedAddress = address
-      .replace(/^(bitcoincash:|bchtest:|bitcoin:|particl:)/i, '')
+      .replace(/^(bitcoincash:|bchtest:|bitcoin:|rhombus:)/i, '')
       .replace(/\?.*/, '');
     return extractedAddress || address;
   }

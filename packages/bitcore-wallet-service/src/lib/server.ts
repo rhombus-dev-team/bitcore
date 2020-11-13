@@ -45,7 +45,7 @@ const Bitcore_ = {
   btc: Bitcore,
   bch: require('bitcore-lib-cash'),
   eth: Bitcore,
-  part: require('bitcore-lib-particl'),
+  part: require('bitcore-lib-rhombus'),
   xrp: Bitcore
 };
 

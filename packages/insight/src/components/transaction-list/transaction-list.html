@@ -6,7 +6,7 @@
       <ion-col col-12 *ngIf="i < limit">
         <transaction-details *ngIf="chainNetwork.chain === 'BTC' || chainNetwork.chain === 'BCH'" [page]="tx-list" [showCoins]="true" [tx]="tx" [chainNetwork]="chainNetwork"></transaction-details>
         <transaction-details-eth *ngIf="chainNetwork.chain === 'ETH'" [showCoins]="true" [tx]="tx" [chainNetwork]="chainNetwork"></transaction-details-eth>
-        <transaction-details-part *ngIf="chainNetwork.chain === 'PART'" [tx]="tx" [chainNetwork]="chainNetwork"></transaction-details-part>
+        <transaction-details-part *ngIf="chainNetwork.chain === 'PART'" [tx]="tx" [chainNetwork]="chainNetwork"></transaction-details-rhom>
       </ion-col>
     </ion-row>
     <ion-row *ngIf="limit < transactions.length">

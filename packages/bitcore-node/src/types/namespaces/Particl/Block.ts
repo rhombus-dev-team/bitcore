@@ -1,4 +1,4 @@
-import { ParticlTransactionType } from "./Transaction";
+import { RhombusTransactionType } from "./Transaction";
 export type BlockHeaderObj = {
   prevHash: string;
   hash: string;
@@ -13,9 +13,9 @@ export type BlockHeader = {
   toObject: () => BlockHeaderObj;
   getDifficulty: () => number;
 };
-export type ParticlBlockType = {
+export type RhombusBlockType = {
   hash: string;
-  transactions: ParticlTransactionType[];
+  transactions: RhombusTransactionType[];
   header: BlockHeader;
   blockSig: string;
   toBuffer: () => Buffer;

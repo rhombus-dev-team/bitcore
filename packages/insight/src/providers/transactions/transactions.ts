@@ -10,9 +10,9 @@ interface CoinsApiResponse {
   outputs: ApiCoin[];
 }
 
-interface ParticlCoinsApiResponse {
-  inputs: ApiParticlCoin[];
-  outputs: ApiParticlCoin[];
+interface RhombusCoinsApiResponse {
+  inputs: ApiRhombusCoin[];
+  outputs: ApiRhombusCoin[];
 }
 
 export interface ApiTx {
@@ -53,9 +53,9 @@ export interface ApiEthTx extends ApiTx {
   fee: number;
 }
 
-export interface ApiParticlTx extends ApiUtxoCoinTx {
-  inputs: ApiParticlCoin[];
-  outputs: ApiParticlCoin[];
+export interface ApiRhombusTx extends ApiUtxoCoinTx {
+  inputs: ApiRhombusCoin[];
+  outputs: ApiRhombusCoin[];
 }
 
 export interface ApiCoin {
@@ -92,7 +92,7 @@ export interface ApiEthCoin {
   value: number;
 }
 
-export interface ApiParticlCoin extends ApiCoin {
+export interface ApiRhombusCoin extends ApiCoin {
   witnesses: string[];
   type: string;
   data: string;
@@ -117,7 +117,7 @@ export interface AppEthCoin {
   valueOut: number;
 }
 
-export interface AppParticlCoin extends AppCoin {
+export interface AppRhombusCoin extends AppCoin {
   witnesses: string[];
   type: string;
   data: string;
@@ -188,7 +188,7 @@ export interface AppEthTx extends AppTx {
   from: string;
 }
 
-export type AppParticlTx = AppUtxoCoinsTx;
+export type AppRhombusTx = AppUtxoCoinsTx;
 
 @Injectable()
 export class TxsProvider {
@@ -227,13 +227,13 @@ export class TxsProvider {
     };
   }
 
-  public toParticlAppTx(tx: ApiParticlTx): AppParticlTx {
+  public toRhombusAppTx(tx: ApiRhombusTx): AppRhombusTx {
     return {
       ...this.toUtxoCoinsAppTx(tx)
     };
   }
 
-  public toAppTx(tx: ApiUtxoCoinTx | ApiEthTx | ApiParticlTx): AppTx {
+  public toAppTx(tx: ApiUtxoCoinTx | ApiEthTx | ApiRhombusTx): AppTx {
     return {
       txid: tx.txid,
       fee: null, // calculated later, when coins are retrieved
@@ -271,7 +271,7 @@ export class TxsProvider {
     };
   }
 
-  public toParticlCoin(coin: ApiParticlCoin): AppParticlCoin {
+  public toRhombusCoin(coin: ApiRhombusCoin): AppRhombusCoin {
     return {
       ...this.toAppCoin(coin),
       type: coin.type,
@@ -284,21 +284,21 @@ export class TxsProvider {
   public getTxs(
     chainNetwork: ChainNetwork,
     args?: { blockHash?: string }
-  ): Observable<ApiEthTx[] & ApiUtxoCoinTx[] & ApiParticlTx[]> {
+  ): Observable<ApiEthTx[] & ApiUtxoCoinTx[] & ApiRhombusTx[]> {
     let queryString = '';
     if (args.blockHash) {
       queryString += `?blockHash=${args.blockHash}`;
     }
     const url = `${this.apiProvider.getUrl(chainNetwork)}/tx/${queryString}`;
-    return this.httpClient.get<ApiEthTx[] & ApiUtxoCoinTx[] & ApiParticlTx[]>(url);
+    return this.httpClient.get<ApiEthTx[] & ApiUtxoCoinTx[] & ApiRhombusTx[]>(url);
   }
 
   public getTx(
     hash: string,
     chainNetwork: ChainNetwork
-  ): Observable<ApiEthTx & ApiUtxoCoinTx & ApiParticlTx> {
+  ): Observable<ApiEthTx & ApiUtxoCoinTx & ApiRhombusTx> {
     const url = `${this.apiProvider.getUrl(chainNetwork)}/tx/${hash}`;
-    return this.httpClient.get<ApiEthTx & ApiUtxoCoinTx & ApiParticlTx>(url);
+    return this.httpClient.get<ApiEthTx & ApiUtxoCoinTx & ApiRhombusTx>(url);
   }
 
   public getDailyTransactionHistory(chainNetwork: ChainNetwork) {
@@ -311,9 +311,9 @@ export class TxsProvider {
   public getCoins(
     txId: string,
     chainNetwork: ChainNetwork
-  ): Observable<CoinsApiResponse & ParticlCoinsApiResponse> {
+  ): Observable<CoinsApiResponse & RhombusCoinsApiResponse> {
     const url = `${this.apiProvider.getUrl(chainNetwork)}/tx/${txId}/coins`;
-    return this.httpClient.get<CoinsApiResponse & ParticlCoinsApiResponse>(url);
+    return this.httpClient.get<CoinsApiResponse & RhombusCoinsApiResponse>(url);
   }
 
   public getConfirmations(

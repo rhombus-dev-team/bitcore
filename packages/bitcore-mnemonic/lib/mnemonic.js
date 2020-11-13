@@ -4,7 +4,7 @@ var bitcore = require('bitcore-lib');
 var bitcore_ = {
   btc: bitcore,
   bch: require('bitcore-lib-cash'),
-  part: require('bitcore-lib-particl'),
+  rhom: require('bitcore-lib-rhombus'),
 };
 var BN = bitcore.crypto.BN;
 var unorm = require('unorm');

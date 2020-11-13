@@ -16,7 +16,7 @@ const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
   eth: require('bitcore-lib'),
-  part: require('bitcore-lib-particl'),
+  rhom: require('bitcore-lib-rhombus'),
   xrp: require('bitcore-lib')
 };
 
@@ -317,7 +317,7 @@ export class Wallet {
 
     addresses.push(Address.derive(this.id, this.addressType, this.publicKeyRing, path, this.m, this.coin, this.network, isChange, null, false));
 
-    if (this.coin === 'part' && !this.singleAddress) {
+    if (this.coin === 'rhom' && !this.singleAddress) {
       addresses.push(Address.derive(this.id, this.addressType, this.publicKeyRing, path, this.m, this.coin, this.network, isChange, null, true));
     }
 
@@ -335,7 +335,7 @@ export class Wallet {
   getColdStakingAddresses(spendAddress) {
     let addresses = {};
 
-    if (this.coin !== 'part' || _.isEmpty(this.coldStakingSetup)) {
+    if (this.coin !== 'rhom' || _.isEmpty(this.coldStakingSetup)) {
       return addresses;
     }
 
@@ -349,7 +349,7 @@ export class Wallet {
       addresses['staking_address'] = this.coldStakingSetup.staking_key;
       addresses['spend_address'] = this.coldStakingSetup.spend_address;
     } else {
-      const xPub = Bitcore.part.HDPublicKey(this.coldStakingSetup.staking_key);
+      const xPub = Bitcore.rhom.HDPublicKey(this.coldStakingSetup.staking_key);
 
       if (!this.coldStakingSetup.address_index) {
         this.coldStakingSetup['address_index'] = 0;

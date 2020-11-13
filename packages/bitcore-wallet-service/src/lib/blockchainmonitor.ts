@@ -52,7 +52,7 @@ export class BlockchainMonitor {
             btc: {},
             bch: {},
             eth: {},
-            part: {},
+            rhom: {},
             xrp: {}
           };
 

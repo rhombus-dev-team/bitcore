@@ -245,7 +245,7 @@ export class EmailService {
       bit: 'bits',
       bch: 'BCH',
       eth: 'ETH',
-      part: 'PART',
+      rhom: 'PART',
       xrp: 'XRP'
     };
 

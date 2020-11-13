@@ -765,7 +765,7 @@ export class Storage {
         if (!result || _.isEmpty(result)) return cb();
         if (result.length > 1) {
           result = _.find(result, address => {
-            return coin == (address.coin || 'part');
+            return coin == (address.coin || 'rhom');
           });
         } else {
           result = _.head(result);

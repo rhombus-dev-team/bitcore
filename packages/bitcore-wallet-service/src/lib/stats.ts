@@ -21,7 +21,7 @@ export class Stats {
     opts = opts || {};
 
     this.network = opts.network || 'livenet';
-    this.coin = opts.coin || 'part';
+    this.coin = opts.coin || 'rhom';
     this.from = moment(opts.from || INITIAL_DATE).format('YYYY-MM-DD');
     this.to = moment(opts.to).format('YYYY-MM-DD');
   }

@@ -1,5 +1,5 @@
 {
-  "name": "bitcore-wallet-client-particl-dev",
+  "name": "bitcore-wallet-client-rhombus-dev",
   "description": "Client for bitcore-wallet-service",
   "author": "BitPay Inc",
   "version": "8.16.2",
@@ -18,11 +18,11 @@
   ],
   "engine": "node >= 8.0.0",
   "repository": {
-    "url": "git@github.com:particl/bitcore-wallet-client.git",
+    "url": "git@github.com:rhombus/bitcore-wallet-client.git",
     "type": "git"
   },
   "bugs": {
-    "url": "https://github.com/particl/bitcore-wallet-client/issues"
+    "url": "https://github.com/rhombus/bitcore-wallet-client/issues"
   },
   "dependencies": {
     "ajv": "^6.10.0",

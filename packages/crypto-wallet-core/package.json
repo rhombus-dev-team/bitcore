@@ -32,7 +32,7 @@
 
     "bitcore-lib": "^8.16.2",
     "bitcore-lib-cash": "^8.16.2",
-    "bitcore-lib-particl": "^8.16.2",
+    "bitcore-lib-rhombus": "^8.16.2",
     "ethers": "4.0.37",
     "ripple-binary-codec": "0.2.6",
     "ripple-keypairs": "git+https://git@github.com/bitpay/ripple-keypairs.git#8d3a4643a8ddfce8222786e1e5a3e85a89a5b7f5",

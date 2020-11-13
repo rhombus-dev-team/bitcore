@@ -8,7 +8,7 @@ module.exports = {
     p2p: require('bitcore-p2p-cash'),
   },
   PART: {
-    lib: require('bitcore-lib-particl'),
-    p2p: require('bitcore-p2p-particl'),
+    lib: require('bitcore-lib-rhombus'),
+    p2p: require('bitcore-p2p-rhombus'),
   },
 };

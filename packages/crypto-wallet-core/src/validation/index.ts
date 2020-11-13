@@ -1,7 +1,7 @@
 import { BchValidation } from './bch';
 import { BtcValidation } from './btc';
 import { EthValidation } from './eth';
-import { PartValidation } from './part';
+import { RhomValidation } from './rhom';
 import { XrpValidation } from './xrp';
 
 export interface IValidation {
@@ -14,7 +14,7 @@ const validation: { [chain: string]: IValidation } = {
   BCH: new BchValidation(),
   ETH: new EthValidation(),
   XRP: new XrpValidation(),
-  PART: new PartValidation()
+  PART: new RhomValidation()
 };
 
 export class ValidationProxy {

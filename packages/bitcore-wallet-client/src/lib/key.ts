@@ -281,7 +281,7 @@ export class Key {
       coinCode = '0';
     } else if (opts.coin == 'eth') {
       coinCode = '60';
-    } else if (opts.coin == 'part') {
+    } else if (opts.coin == 'rhom') {
       coinCode = '44';
     } else if (opts.coin == 'xrp') {
       coinCode = '144';

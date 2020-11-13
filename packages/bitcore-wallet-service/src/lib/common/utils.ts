@@ -8,7 +8,7 @@ const Bitcore = require('bitcore-lib');
 const Bitcore_ = {
   btc: Bitcore,
   bch: require('bitcore-lib-cash'),
-  part: require('bitcore-lib-particl')
+  rhom: require('bitcore-lib-rhombus')
 };
 
 export class Utils {
@@ -141,7 +141,7 @@ export class Utils {
         maxDecimals: 6,
         minDecimals: 2,
       },
-      part: {
+      rhom: {
         toSatoshis: 100000000,
         maxDecimals: 6,
         minDecimals: 2,
@@ -281,8 +281,8 @@ export class Utils {
         return 'bch';
       } catch (e) {
         try {
-          new Bitcore_['part'].Address(address);
-          return 'part';
+          new Bitcore_['rhom'].Address(address);
+          return 'rhom';
         } catch (e) {
           return;
         }

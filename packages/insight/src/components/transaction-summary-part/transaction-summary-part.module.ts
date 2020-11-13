@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { IonicModule } from 'ionic-angular';
-import { TransactionSummaryPartComponent } from './transaction-summary-part';
+import { TransactionSummaryRhomComponent } from './transaction-summary-rhom';
 
 @NgModule({
-  declarations: [TransactionSummaryPartComponent],
+  declarations: [TransactionSummaryRhomComponent],
   imports: [IonicModule],
-  exports: [TransactionSummaryPartComponent]
+  exports: [TransactionSummaryRhomComponent]
 })
-export class TransactionSummaryPartComponentModule {}
+export class TransactionSummaryRhomComponentModule {}

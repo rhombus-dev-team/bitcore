@@ -53,7 +53,7 @@ export class Request {
   //  @param {String} privKey - Private key to sign the request
   static _signRequest(method, url, args, privKey) {
     var message = [method.toLowerCase(), url, JSON.stringify(args)].join('|');
-    return Utils.signMessage(message, privKey, 'part');
+    return Utils.signMessage(message, privKey, 'rhom');
   }
 
   //  Do an HTTP request

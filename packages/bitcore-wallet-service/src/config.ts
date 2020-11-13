@@ -64,7 +64,7 @@ module.exports = {
         url: 'https://api-xrp.bitcore.io'
       }
     },
-    part: {
+    rhom: {
       livenet: {
         url: 'http://localhost:3000',
       },
@@ -77,7 +77,7 @@ module.exports = {
   pushNotificationsOpts: {
     templatePath: 'templates',
     defaultLanguage: 'en',
-    defaultUnit: 'part',
+    defaultUnit: 'rhom',
     subjectPrefix: '',
     pushServerUrl: 'https://fcm.googleapis.com/fcm',
     authorizationKey: 'You_have_to_put_something_here'

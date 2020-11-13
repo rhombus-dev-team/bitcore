@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { ApiProvider, ChainNetwork } from '../../providers/api/api';
 import {
   ApiEthBlock,
-  ApiParticlBlock,
+  ApiRhombusBlock,
   ApiUtxoCoinBlock,
   AppBlock,
   BlocksProvider
@@ -74,7 +74,7 @@ export class LatestBlocksComponent implements OnInit, OnDestroy {
                 return this.blocksProvider.toEthAppBlock(block);
               }
               if(this.chainNetwork.chain === "PART") {
-                return this.blocksProvider.toParticlAppBlock(block);
+                return this.blocksProvider.toRhombusAppBlock(block);
               }
             }
           );

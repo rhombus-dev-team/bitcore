@@ -3,7 +3,7 @@
 import {
   BitcoreLib,
   BitcoreLibCash,
-  BitcoreLibParticl,
+  BitcoreLibRhombus,
   Deriver,
   Transactions
 } from 'crypto-wallet-core';
@@ -21,7 +21,7 @@ var Bitcore_ = {
   btc: Bitcore,
   bch: BitcoreLibCash,
   eth: Bitcore,
-  part: BitcoreLibParticl,
+  part: BitcoreLibRhombus,
   xrp: Bitcore
 };
 var PrivateKey = Bitcore.PrivateKey;
@@ -216,7 +216,7 @@ export class Utils {
     // now it is effective for all coins.
 
     const chain = this.getChain(coin).toLowerCase();
-    var str = chain == 'part' ? xpub : chain + xpub;
+    var str = chain == 'rhom' ? xpub : chain + xpub;
 
     var hash = sjcl.hash.sha256.hash(str);
     return sjcl.codec.hex.fromBits(hash);

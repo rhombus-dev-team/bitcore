@@ -22,7 +22,7 @@ const PROVIDERS = {
       livenet: 'https://api-eth.bitcore.io',
       testnet: 'https://api-eth.bitcore.io'
     },
-    part: {
+    rhom: {
       livenet: 'http://localhost:3000',
       testnet: 'http://localhost:3000'
     },

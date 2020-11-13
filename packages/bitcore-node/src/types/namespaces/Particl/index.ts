@@ -1,27 +1,27 @@
-import { ParticlBlockType, BlockHeader, BlockHeaderObj } from './Block';
+import { RhombusBlockType, BlockHeader, BlockHeaderObj } from './Block';
 import {
-  ParticlTransactionType,
-  ParticlOutput,
-  ParticlInput,
-  ParticlScript,
-  ParticlAddress,
-  ParticlInputObj
+  RhombusTransactionType,
+  RhombusOutput,
+  RhombusInput,
+  RhombusScript,
+  RhombusAddress,
+  RhombusInputObj
 } from './Transaction';
 
-export declare namespace Particl {
-  export type Block = ParticlBlockType;
-  export type Transaction = ParticlTransactionType;
-  export type Script = ParticlScript;
-  export type Address = ParticlAddress;
+export declare namespace Rhombus {
+  export type Block = RhombusBlockType;
+  export type Transaction = RhombusTransactionType;
+  export type Script = RhombusScript;
+  export type Address = RhombusAddress;
 }
 
-export declare namespace Particl.Transaction {
-  export type Output = ParticlOutput;
-  export type Input = ParticlInput;
-  export type InputObj = ParticlInputObj;
+export declare namespace Rhombus.Transaction {
+  export type Output = RhombusOutput;
+  export type Input = RhombusInput;
+  export type InputObj = RhombusInputObj;
 }
 
-export declare namespace Particl.Block {
+export declare namespace Rhombus.Block {
   export type Header = BlockHeader;
   export type HeaderObj = BlockHeaderObj
 }

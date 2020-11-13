@@ -9,10 +9,10 @@ import { CurrencyProvider } from '../../providers/currency/currency';
  * for more info on Angular Components.
  */
 @Component({
-  selector: 'transaction-summary-part',
-  templateUrl: 'transaction-summary-part.html'
+  selector: 'transaction-summary-rhom',
+  templateUrl: 'transaction-summary-rhom.html'
 })
-export class TransactionSummaryPartComponent {
+export class TransactionSummaryRhomComponent {
   @Input()
   public tx: any = {};
   @Input()

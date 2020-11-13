@@ -1,8 +1,8 @@
 import logger, { timestamp } from '../../logger';
 import { BaseP2PWorker } from '../../services/p2p';
 import { EventEmitter } from 'events';
-import { ParticlBlock, ParticlBlockStorage, IPartBlock } from './models/block';
-import { Particl } from '../../types/namespaces/Particl';
+import { RhombusBlock, RhombusBlockStorage, IRhomBlock } from './models/block';
+import { Rhombus } from '../../types/namespaces/Rhombus';
 import { wait } from '../../utils/wait';
 import { TransactionStorage } from '../../models/transaction';
 import { SpentHeightIndicators } from '../../types/Coin';
@@ -10,7 +10,7 @@ import { StateStorage } from '../../models/state';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { Libs } from '../../providers/libs';
 
-export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
+export class RhombusP2PWorker extends BaseP2PWorker<IRhomBlock> {
   protected bitcoreLib: any;
   protected bitcoreP2p: any;
   protected chainConfig: any;
@@ -19,11 +19,11 @@ export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
   protected invCache: any;
   protected invCacheLimits: any;
   protected initialSyncComplete: boolean;
-  protected blockModel: ParticlBlock;
+  protected blockModel: RhombusBlock;
   protected pool: any;
   public events: EventEmitter;
   public isSyncing: boolean;
-  constructor({ chain, network, chainConfig, blockModel = ParticlBlockStorage }) {
+  constructor({ chain, network, chainConfig, blockModel = RhombusBlockStorage }) {
     super({ chain, network, chainConfig, blockModel });
     this.blockModel = blockModel;
     this.chain = chain;
@@ -181,9 +181,9 @@ export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
     }
   }
 
-  public async getHeaders(candidateHashes: string[]): Promise<Particl.Block.HeaderObj[]> {
+  public async getHeaders(candidateHashes: string[]): Promise<Rhombus.Block.HeaderObj[]> {
     let received = false;
-    return new Promise<Particl.Block.HeaderObj[]>(async resolve => {
+    return new Promise<Rhombus.Block.HeaderObj[]>(async resolve => {
       this.events.once('headers', headers => {
         received = true;
         resolve(headers);
@@ -198,8 +198,8 @@ export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
   public async getBlock(hash: string) {
     logger.debug('Getting block, hash:', hash);
     let received = false;
-    return new Promise<Particl.Block>(async resolve => {
-      this.events.once(hash, (block: Particl.Block) => {
+    return new Promise<Rhombus.Block>(async resolve => {
+      this.events.once(hash, (block: Rhombus.Block) => {
         logger.debug('Received block, hash:', hash);
         received = true;
         resolve(block);
@@ -221,7 +221,7 @@ export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
     return best;
   }
 
-  async processBlock(block: Particl.Block): Promise<any> {
+  async processBlock(block: Rhombus.Block): Promise<any> {
     await this.blockModel.addBlock({
       chain: this.chain,
       network: this.network,
@@ -232,7 +232,7 @@ export class ParticlP2PWorker extends BaseP2PWorker<IPartBlock> {
     });
   }
 
-  async processTransaction(tx: Particl.Transaction): Promise<any> {
+  async processTransaction(tx: Rhombus.Transaction): Promise<any> {
     const now = new Date();
     await TransactionStorage.batchImport({
       chain: this.chain,

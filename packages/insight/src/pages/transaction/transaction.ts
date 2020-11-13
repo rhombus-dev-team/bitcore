@@ -65,7 +65,7 @@ export class TransactionPage {
           tx = this.txProvider.toEthAppTx(response);
         }
         if(this.chainNetwork.chain === "PART") {
-          tx = this.txProvider.toParticlAppTx(response);
+          tx = this.txProvider.toRhombusAppTx(response);
         }
         this.tx = tx;
         this.loading = false;

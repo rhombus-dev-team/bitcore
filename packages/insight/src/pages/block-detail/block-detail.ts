@@ -64,7 +64,7 @@ export class BlockDetailPage {
           block = this.blocksProvider.toEthAppBlock(response);
         }
         if(this.chainNetwork.chain === "PART") {
-          block = this.blocksProvider.toParticlAppBlock(response);
+          block = this.blocksProvider.toRhombusAppBlock(response);
         }
         this.block = block;
         this.txProvider

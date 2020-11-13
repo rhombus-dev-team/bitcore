@@ -7,7 +7,7 @@ module.exports = {
     btc: 10000 * 1000, // 10k sat/b
     bch: 10000 * 1000, // 10k sat/b
     eth: 50000000000, // 50 Gwei,
-    part: 10000 * 1000, // 10k sat/b
+    rhom: 10000 * 1000, // 10k sat/b
     xrp: 50000000000
   },
 
@@ -15,7 +15,7 @@ module.exports = {
     btc: 0,
     bch: 0,
     eth: 0,
-    part: 0,
+    rhom: 0,
     xrp: 0
   },
 
@@ -23,7 +23,7 @@ module.exports = {
     btc: 0.05 * 1e8,
     bch: 0.05 * 1e8,
     eth: 1 * 1e18,  // 1 eth
-    part: 0.05 * 1e8,
+    rhom: 0.05 * 1e8,
     xrp: 1 * 1e6 // 1 xrp
   },
 
@@ -31,7 +31,7 @@ module.exports = {
     btc: 100,
     bch: 100,
     eth: 500,
-    part: 100,
+    rhom: 100,
     xrp: 1000
   },
 
@@ -128,7 +128,7 @@ module.exports = {
         defaultValue: 12
       }
     ],
-    part: [
+    rhom: [
       {
         name: 'urgent',
         nbBlocks: 2,
@@ -236,7 +236,7 @@ module.exports = {
     // },
   },
 
-  COIN: 'part',
+  COIN: 'rhom',
   INSIGHT_REQUEST_POOL_SIZE: 10,
   INSIGHT_TIMEOUT: 30000,
 

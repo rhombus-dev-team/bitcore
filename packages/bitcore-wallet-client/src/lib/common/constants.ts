@@ -110,7 +110,7 @@ export const Constants = {
       }
 
     },
-    part: {
+    rhom: {
       toSatoshis: 100000000,
       full: {
         maxDecimals: 8,
@@ -122,9 +122,9 @@ export const Constants = {
       }
     },
   },
-  COINS: ['btc', 'bch', 'eth', 'usdc', 'pax', 'gusd', 'part', 'xrp'],
+  COINS: ['btc', 'bch', 'eth', 'usdc', 'pax', 'gusd', 'rhom', 'xrp'],
   ERC20: ['usdc', 'pax', 'gusd'],
-  UTXO_COINS: ['btc', 'bch', 'part'],
+  UTXO_COINS: ['btc', 'bch', 'rhom'],
   TOKEN_OPTS: {
     '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': {
       name: 'USD Coin',

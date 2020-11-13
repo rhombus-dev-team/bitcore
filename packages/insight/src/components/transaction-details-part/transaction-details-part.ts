@@ -15,10 +15,10 @@ import {
  * for more info on Angular Components.
  */
 @Component({
-  selector: 'transaction-details-part',
-  templateUrl: 'transaction-details-part.html'
+  selector: 'transaction-details-rhom',
+  templateUrl: 'transaction-details-rhom.html'
 })
-export class TransactionDetailsPartComponent implements OnInit {
+export class TransactionDetailsRhomComponent implements OnInit {
   public expanded = false;
   @Input()
   public tx: any = {};

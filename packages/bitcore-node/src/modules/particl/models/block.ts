@@ -1,16 +1,16 @@
 import logger from '../../../logger';
 import { CoinStorage } from '../../../models/coin';
-import { ParticlTransactionStorage } from './transaction';
+import { RhombusTransactionStorage } from './transaction';
 import { TransformOptions } from '../../../types/TransformOptions';
 import { LoggifyClass } from '../../../decorators/Loggify';
-import { Particl } from '../../../types/namespaces/Particl';
+import { Rhombus } from '../../../types/namespaces/Rhombus';
 import { MongoBound } from '../../../models/base';
 import { SpentHeightIndicators } from '../../../types/Coin';
 import { EventStorage } from '../../../models/events';
 import { StorageService } from '../../../services/storage';
 import { BaseBlock, IBlock } from '../../../models/baseBlock';
 
-export type IPartBlock = IBlock & {
+export type IRhomBlock = IBlock & {
   version: number;
   merkleRoot: string;
   witnessMerkleRoot: string;
@@ -20,13 +20,13 @@ export type IPartBlock = IBlock & {
 };
 
 @LoggifyClass
-export class ParticlBlock extends BaseBlock<IPartBlock> {
+export class RhombusBlock extends BaseBlock<IRhomBlock> {
   constructor(storage?: StorageService) {
     super(storage);
   }
 
   async addBlock(params: {
-    block: Particl.Block;
+    block: Rhombus.Block;
     parentChain?: string;
     forkHeight?: number;
     initialSyncComplete: boolean;
@@ -45,7 +45,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
   }
 
   async processBlock(params: {
-    block: Particl.Block;
+    block: Rhombus.Block;
     parentChain?: string;
     forkHeight?: number;
     initialSyncComplete: boolean;
@@ -68,7 +68,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
       logger.debug('Updating previous block.nextBlockHash ', convertedBlock.hash);
     }
 
-    await ParticlTransactionStorage.batchImport({
+    await RhombusTransactionStorage.batchImport({
       txs: block.transactions,
       blockHash: convertedBlock.hash,
       blockTime: new Date(time),
@@ -88,7 +88,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     await this.collection.updateOne({ hash: convertedBlock.hash, chain, network }, { $set: { processed: true } });
   }
 
-  async getBlockOp(params: { block: Particl.Block; chain: string; network: string }) {
+  async getBlockOp(params: { block: Rhombus.Block; chain: string; network: string }) {
     const { block, chain, network } = params;
     const header = block.header.toObject();
     const blockTime = header.time * 1000;
@@ -107,7 +107,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     const height = (previousBlock && previousBlock.height + 1) || 1;
     logger.debug('Setting blockheight: ' + height);
 
-    const convertedBlock: IPartBlock = {
+    const convertedBlock: IRhomBlock = {
       chain,
       network,
       hash: block.hash,
@@ -142,7 +142,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     };
   }
 
-  async handleReorg(params: { header?: Particl.Block.HeaderObj; chain: string; network: string }): Promise<boolean> {
+  async handleReorg(params: { header?: Rhombus.Block.HeaderObj; chain: string; network: string }): Promise<boolean> {
     const { header, chain, network } = params;
     let localTip = await this.getLocalTip(params);
     if (header && localTip && localTip.hash === header.prevHash) {
@@ -162,7 +162,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     }
     const reorgOps = [
       this.collection.deleteMany({ chain, network, height: { $gte: localTip.height } }),
-      ParticlTransactionStorage.collection.deleteMany({ chain, network, blockHeight: { $gte: localTip.height } }),
+      RhombusTransactionStorage.collection.deleteMany({ chain, network, blockHeight: { $gte: localTip.height } }),
       CoinStorage.collection.deleteMany({ chain, network, mintHeight: { $gte: localTip.height } })
     ];
     await Promise.all(reorgOps);
@@ -176,7 +176,7 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
     return true;
   }
 
-  _apiTransform(block: Partial<MongoBound<IPartBlock>>, options?: TransformOptions): any {
+  _apiTransform(block: Rhomial<MongoBound<IRhomBlock>>, options?: TransformOptions): any {
     const transform = {
       _id: block._id,
       chain: block.chain,
@@ -216,4 +216,4 @@ export class ParticlBlock extends BaseBlock<IPartBlock> {
   }
 }
 
-export let ParticlBlockStorage = new ParticlBlock();
+export let RhombusBlockStorage = new RhombusBlock();

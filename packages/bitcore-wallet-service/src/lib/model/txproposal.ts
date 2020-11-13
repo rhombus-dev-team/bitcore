@@ -14,7 +14,7 @@ const Bitcore = {
   btc: require('bitcore-lib'),
   bch: require('bitcore-lib-cash'),
   eth: require('bitcore-lib'),
-  part: require('bitcore-lib-particl')
+  rhom: require('bitcore-lib-rhombus')
 };
 
 const Common = require('../common');

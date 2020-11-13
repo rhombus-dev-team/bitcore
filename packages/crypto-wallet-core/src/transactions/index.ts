@@ -2,7 +2,7 @@ import { BCHTxProvider } from './bch';
 import { BTCTxProvider } from './btc';
 import { ERC20TxProvider } from './erc20';
 import { ETHTxProvider } from './eth';
-import { PARTTxProvider } from './part';
+import { PARTTxProvider } from './rhom';
 import { XRPTxProvider } from './xrp';
 
 const providers = {

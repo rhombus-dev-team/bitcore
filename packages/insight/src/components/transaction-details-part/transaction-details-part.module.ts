@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { IonicModule } from 'ionic-angular';
-import { TransactionDetailsPartComponent } from './transaction-details-part';
+import { TransactionDetailsPartComponent } from './transaction-details-rhom';
 
 import { CopyToClipboardModule } from '../../directives/copy-to-clipboard/copy-to-clipboard.module';
 
 @NgModule({
-  declarations: [TransactionDetailsPartComponent],
+  declarations: [TransactionDetailsRhomComponent],
   imports: [IonicModule, CopyToClipboardModule],
-  exports: [TransactionDetailsPartComponent]
+  exports: [TransactionDetailsRhomComponent]
 })
-export class TransactionDetailsPartComponentModule {}
+export class TransactionDetailsRhomComponentModule {}

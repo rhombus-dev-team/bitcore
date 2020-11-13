@@ -8,7 +8,7 @@ import { partition } from '../../../utils/partition';
 import { ObjectID } from 'bson';
 import { TransformOptions } from '../../../types/TransformOptions';
 import { LoggifyClass } from '../../../decorators/Loggify';
-import { Particl } from '../../../types/namespaces/Particl';
+import { Rhombus } from '../../../types/namespaces/Rhombus';
 import { MongoBound } from '../../../models/base';
 import { StorageService } from '../../../services/storage';
 import { TransactionJSON } from '../../../types/Transaction';
@@ -28,7 +28,7 @@ function shouldFire(obj: { wallets?: Array<ObjectID> }) {
 }
 const MAX_BATCH_SIZE = 50000;
 
-export type IPartTransaction = ITransaction & {
+export type IRhomTransaction = ITransaction & {
   coinbase: boolean;
   coinstake?: boolean;
   locktime: number;
@@ -37,7 +37,7 @@ export type IPartTransaction = ITransaction & {
   size: number;
 };
 
-export type TaggedParticlTx = Particl.Transaction & { wallets: Array<ObjectID> };
+export type TaggedRhombusTx = Rhombus.Transaction & { wallets: Array<ObjectID> };
 
 export type MintOp = {
   updateOne: {
@@ -120,7 +120,7 @@ export interface TxOp {
 }
 
 const getUpdatedBatchIfMempool = (batch, height) =>
-  height >= SpentHeightIndicators.minimum ? batch : batch.map(op => ParticlTransactionStorage.toMempoolSafeUpsert(op, height));
+  height >= SpentHeightIndicators.minimum ? batch : batch.map(op => RhombusTransactionStorage.toMempoolSafeUpsert(op, height));
 
 export class MempoolSafeTransform extends Transform {
   constructor(private height: number) {
@@ -195,7 +195,7 @@ export class PruneMempoolStream extends Transform {
   }
 
   async _transform(spendOps: Array<SpendOp>, _, done) {
-    await ParticlTransactionStorage.pruneMempool({
+    await RhombusTransactionStorage.pruneMempool({
       chain: this.chain,
       network: this.network,
       initialSyncComplete: this.initialSyncComplete,
@@ -206,13 +206,13 @@ export class PruneMempoolStream extends Transform {
 }
 
 @LoggifyClass
-export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
+export class RhombusTransactionModel extends BaseTransaction<IRhomTransaction> {
   constructor(storage?: StorageService) {
     super(storage);
   }
 
   async batchImport(params: {
-    txs: Array<Particl.Transaction>;
+    txs: Array<Rhombus.Transaction>;
     height: number;
     mempoolTime?: Date;
     blockTime?: Date;
@@ -257,18 +257,18 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
         .on('finish', r)
     );
 
-    this.streamTxOps({ ...params, txs: params.txs as TaggedParticlTx[], txStream });
+    this.streamTxOps({ ...params, txs: params.txs as TaggedRhombusTx[], txStream });
     await new Promise(r =>
       txStream
         .pipe(new MempoolSafeTransform(height))
-        .pipe(new MongoWriteStream(ParticlTransactionStorage.collection))
+        .pipe(new MongoWriteStream(RhombusTransactionStorage.collection))
         .pipe(new MempoolTxEventTransform(height))
         .on('finish', r)
     );
   }
 
   async streamTxOps(params: {
-    txs: Array<TaggedParticlTx>;
+    txs: Array<TaggedRhombusTx>;
     height: number;
     blockTime?: Date;
     blockHash?: string;
@@ -293,7 +293,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
       mempoolTime
     } = params;
     if (parentChain && forkHeight && height < forkHeight) {
-      const parentTxs = await ParticlTransactionStorage.collection
+      const parentTxs = await RhombusTransactionStorage.collection
         .find({ blockHeight: height, chain: parentChain, network })
         .toArray();
       params.txStream.push(
@@ -414,7 +414,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
     network: string;
     initialSyncComplete: boolean;
     mintBatch: Array<MintOp>;
-    txs: Array<Particl.Transaction>;
+    txs: Array<Rhombus.Transaction>;
   }) {
     const { chain, network, initialSyncComplete, mintBatch } = params;
     const walletConfig = Config.for('api').wallets;
@@ -453,7 +453,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
           }
         }
 
-        for (let tx of params.txs as Array<TaggedParticlTx>) {
+        for (let tx of params.txs as Array<TaggedRhombusTx>) {
           const coinsForTx = mintBatch.filter(mint => mint.updateOne.filter.mintTxid === tx._hash!);
           tx.wallets = coinsForTx.reduce((wallets, c) => {
             wallets = wallets.concat(c.updateOne.update.$set.wallets!);
@@ -465,7 +465,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
   }
 
   async streamMintOps(params: {
-    txs: Array<Particl.Transaction>;
+    txs: Array<Rhombus.Transaction>;
     height: number;
     parentChain?: string;
     forkHeight?: number;
@@ -610,7 +610,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
   }
 
   streamSpendOps(params: {
-    txs: Array<Particl.Transaction>;
+    txs: Array<Rhombus.Transaction>;
     height: number;
     parentChain?: string;
     forkHeight?: number;
@@ -703,7 +703,7 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
     return;
   }
 
-  _apiTransform(tx: Partial<MongoBound<IPartTransaction>>, options?: TransformOptions): TransactionJSON | string {
+  _apiTransform(tx: Partial<MongoBound<IRhomTransaction>>, options?: TransformOptions): TransactionJSON | string {
     const transaction: TransactionJSON = {
       _id: tx._id ? tx._id.toString() : '',
       txid: tx.txid || '',
@@ -727,4 +727,4 @@ export class ParticlTransactionModel extends BaseTransaction<IPartTransaction> {
     return JSON.stringify(transaction);
   }
 }
-export let ParticlTransactionStorage = new ParticlTransactionModel();
+export let RhombusTransactionStorage = new RhombusTransactionModel();

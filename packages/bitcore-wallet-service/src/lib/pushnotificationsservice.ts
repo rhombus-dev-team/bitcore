@@ -91,7 +91,7 @@ export class PushNotificationsService {
       (opts.pushNotificationsOpts.templatePath || __dirname + '../../templates') + '/'
     );
     this.defaultLanguage = opts.pushNotificationsOpts.defaultLanguage || 'en';
-    this.defaultUnit = opts.pushNotificationsOpts.defaultUnit || 'part';
+    this.defaultUnit = opts.pushNotificationsOpts.defaultUnit || 'rhom';
     this.subjectPrefix = opts.pushNotificationsOpts.subjectPrefix || '';
     this.pushServerUrl = opts.pushNotificationsOpts.pushServerUrl;
     this.authorizationKey = opts.pushNotificationsOpts.authorizationKey;
@@ -337,7 +337,7 @@ export class PushNotificationsService {
       usdc: 'USDC',
       pax: 'PAX',
       gusd: 'GUSD',
-      part: 'PART'
+      rhom: 'PART'
     };
     const data = _.cloneDeep(notification.data);
     data.subjectPrefix = _.trim(this.subjectPrefix + ' ');

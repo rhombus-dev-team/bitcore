@@ -45,13 +45,13 @@
   "dependencies": {
     "bitcore-lib": "^8.16.2",
     "bitcore-lib-cash": "^8.16.2",
-    "bitcore-lib-particl": "^8.16.2",
+    "bitcore-lib-rhombus": "^8.16.2",
     "unorm": "^1.4.1"
   },
   "peerDependencies": {
     "bitcore-lib": "^8.16.2",
     "bitcore-lib-cash": "^8.16.2",
-    "bitcore-lib-particl": "^8.16.2"
+    "bitcore-lib-rhombus": "^8.16.2"
   },
   "gitHead": "012cc0216a9bc6b195035855bd17149bad41acd1"
 }
